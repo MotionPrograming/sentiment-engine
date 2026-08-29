@@ -1,0 +1,14 @@
+# Build directories
+/build/
+/cmake-build-*/
+
+# Datasets
+*.parquet
+*.csv
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
