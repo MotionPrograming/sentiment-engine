@@ -9,6 +9,7 @@ using namespace std;
 namespace sentiment {
 
 class ParquetDatasetReader {
+
 public:
 
     explicit ParquetDatasetReader(
@@ -47,4 +48,4 @@ private:
     unique_ptr<Impl> impl_;
 };
 
-}
+} // namespace sentiment

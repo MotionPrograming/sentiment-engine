@@ -35,6 +35,7 @@ add_library(
     src/math/sparse_matrix_csr.cpp
 
     src/ml/linear_svm.cpp
+    src/ml/evaluator.cpp
 
     src/io/dataset_reader.cpp
 )
@@ -99,3 +100,18 @@ message(STATUS " SentimentEngine")
 message(STATUS " C++ Standard : C++20")
 message(STATUS " Arrow        : ${Arrow_VERSION}")
 message(STATUS "========================================")
+
+# ============================================================
+# Evaluator Test
+# ============================================================
+
+add_executable(
+    sentiment_evaluator_test
+    apps/evaluator_test.cpp
+)
+
+target_link_libraries(
+    sentiment_evaluator_test
+    PRIVATE
+        sentiment_core
+)

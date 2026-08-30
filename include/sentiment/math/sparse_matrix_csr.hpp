@@ -2,14 +2,17 @@
 
 #include "sentiment/core/types.hpp"
 
-#include <limits>
-#include <cstdint>
+#include <bits/stdc++.h>
+
+using namespace std;
 
 namespace sentiment {
 
 class SparseMatrixCSR {
+
 public:
-    using Index = std::uint32_t;
+
+    using Index = uint32_t;
 
     SparseMatrixCSR() = default;
 
@@ -18,7 +21,9 @@ public:
         sz cols
     );
 
-    void reserve(sz non_zero);
+    void reserve(
+        sz non_zero
+    );
 
     void add(
         Index row,
@@ -43,12 +48,28 @@ public:
         const vec<double>& weights
     ) const noexcept;
 
+    [[nodiscard]]
+    const vec<Index>& row_ptr()
+        const noexcept;
+
+    [[nodiscard]]
+    const vec<Index>& col_indices()
+        const noexcept;
+
+    [[nodiscard]]
+    const vec<double>& values()
+        const noexcept;
+
 private:
+
     sz rows_{0};
+
     sz cols_{0};
 
     vec<Index> row_ptr_;
+
     vec<Index> col_indices_;
+
     vec<double> values_;
 
     bool finalized_{false};

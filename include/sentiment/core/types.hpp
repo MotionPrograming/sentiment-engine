@@ -30,8 +30,12 @@ enum class Sentiment : u8 {
 };
 
 [[nodiscard]]
-inline constexpr sv to_string(Sentiment sentiment) noexcept {
+inline constexpr sv to_string(
+    Sentiment sentiment
+) noexcept {
+
     switch (sentiment) {
+
         case Sentiment::Negative:
             return "negative";
 
@@ -50,10 +54,60 @@ struct Review {
     Sentiment sentiment{Sentiment::Neutral};
 };
 
+/*
+ * Sparse feature vector.
+ *
+ * indices[i] and values[i] represent:
+ *
+ *     feature index -> TF-IDF value
+ *
+ * Only non-zero features are stored.
+ */
+struct SparseVector {
+    vec<sz> indices;
+    vec<double> values;
+
+    [[nodiscard]]
+    sz size() const noexcept {
+        return indices.size();
+    }
+
+    [[nodiscard]]
+    bool valid() const noexcept {
+        return indices.size() == values.size();
+    }
+
+    void clear() noexcept {
+        indices.clear();
+        values.clear();
+    }
+
+    void reserve(sz capacity) {
+        indices.reserve(capacity);
+        values.reserve(capacity);
+    }
+
+    void add(
+        sz index,
+        double value
+    ) {
+        if (value == 0.0) {
+            return;
+        }
+
+        indices.push_back(index);
+        values.push_back(value);
+    }
+};
+
 struct Prediction {
     Sentiment label{Sentiment::Neutral};
     double score{0.0};
-    arr<double, 3> probabilities{0.0, 0.0, 0.0};
+    arr<double, 3> probabilities{
+        0.0,
+        0.0,
+        0.0
+    };
 };
 
 struct BatchPredictionRequest {

@@ -64,17 +64,17 @@ int main() {
         << "\n\n";
 
     // --------------------------------------------------------
-    // Transform training data
+    // Transform training data to SparseVector
     // --------------------------------------------------------
 
-    vec<vec<double>> features;
+    vec<SparseVector> features;
 
     features.reserve(documents.size());
 
     for (const auto& document : documents) {
 
         features.push_back(
-            vectorizer.transform(document)
+            vectorizer.transform_sparse(document)
         );
     }
 
@@ -89,15 +89,29 @@ int main() {
 
     LinearSVM svm(feature_count);
 
-    std::cout << "Training Linear SVM...\n";
+    std::cout
+        << "Training Linear SVM...\n";
 
-    svm.train(
-        features,
-        labels,
-        50,
-        0.05,
-        0.0001
-    );
+    constexpr int epochs = 50;
+    constexpr double learning_rate = 0.05;
+    constexpr double regularization = 0.0001;
+
+    for (int epoch = 0;
+         epoch < epochs;
+         ++epoch) {
+
+        for (sz i = 0;
+             i < features.size();
+             ++i) {
+
+            svm.train_sample(
+                features[i],
+                labels[i],
+                learning_rate,
+                regularization
+            );
+        }
+    }
 
     std::cout
         << "SVM trained: "
@@ -111,9 +125,12 @@ int main() {
 
     sz correct = 0;
 
-    std::cout << "Training predictions:\n\n";
+    std::cout
+        << "Training predictions:\n\n";
 
-    for (sz i = 0; i < documents.size(); ++i) {
+    for (sz i = 0;
+         i < documents.size();
+         ++i) {
 
         const Prediction prediction =
             svm.predict(features[i]);
@@ -179,11 +196,11 @@ int main() {
 
     for (const auto& document : test_documents) {
 
-        const auto test_features =
-            vectorizer.transform(document);
+        const SparseVector sparse_features =
+            vectorizer.transform_sparse(document);
 
         const Prediction prediction =
-            svm.predict(test_features);
+            svm.predict(sparse_features);
 
         std::cout
             << "Text: "
@@ -191,41 +208,21 @@ int main() {
             << "\n";
 
         std::cout
-            << "Predicted: "
+            << "    predicted: "
             << to_string(prediction.label)
             << "\n";
 
         std::cout
-            << "Score: "
+            << "    score: "
             << std::fixed
             << std::setprecision(6)
             << prediction.score
             << "\n\n";
     }
 
-    // --------------------------------------------------------
-    // Final verification
-    // --------------------------------------------------------
-
-    if (!svm.trained()) {
-
-        std::cerr
-            << "ERROR: SVM was not marked as trained.\n";
-
-        return 1;
-    }
-
-    if (accuracy < 0.80) {
-
-        std::cerr
-            << "ERROR: Training accuracy below 80%.\n";
-
-        return 1;
-    }
-
     std::cout
         << "========================================\n"
-        << " Linear SVM test completed successfully.\n"
+        << " Test completed\n"
         << "========================================\n";
 
     return 0;

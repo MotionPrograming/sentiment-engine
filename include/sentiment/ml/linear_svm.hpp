@@ -10,10 +10,9 @@ public:
         sz feature_count
     );
 
-    void train(
-        const vec<vec<double>>& features,
-        const vec<Sentiment>& labels,
-        sz epochs = 5,
+    void train_sample(
+        const SparseVector& features,
+        Sentiment label,
         double learning_rate = 0.01,
         double regularization = 0.0001
     );
@@ -34,6 +33,19 @@ public:
     ) const noexcept;
 
     [[nodiscard]]
+    Prediction predict(
+        const SparseVector& features
+    ) const noexcept;
+
+    [[nodiscard]]
+    const vec<vec<double>>& weights()
+        const noexcept;
+
+    [[nodiscard]]
+    const arr<double, 3>& bias()
+        const noexcept;
+
+    [[nodiscard]]
     bool trained() const noexcept;
 
 private:
@@ -45,7 +57,32 @@ private:
 
     arr<double, ClassCount> bias_{};
 
+    /*
+     * Lazy L2 regularization.
+     *
+     * last_update[class][feature] stores the training step
+     * at which that coordinate was last physically shrunk.
+     */
+    vec<vec<u64>> last_update_;
+
+    u64 step_{0};
+
     bool trained_{false};
+
+    void apply_lazy_regularization(
+        sz class_id,
+        sz feature,
+        double learning_rate,
+        double regularization
+    ) noexcept;
+
+    [[nodiscard]]
+    double effective_weight(
+        sz class_id,
+        sz feature,
+        double learning_rate,
+        double regularization
+    ) const noexcept;
 };
 
 } // namespace sentiment

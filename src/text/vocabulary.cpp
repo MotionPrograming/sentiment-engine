@@ -1,18 +1,19 @@
 #include "sentiment/text/vocabulary.hpp"
-using namespace std;
 
 namespace sentiment {
 
 Vocabulary::TokenId
-Vocabulary::add(std::string_view token) {
+Vocabulary::add(sv token) {
 
-    auto it = token_to_id_.find(std::string(token));
+    const auto it =
+        token_to_id_.find(str(token));
 
     if (it != token_to_id_.end()) {
         return it->second;
     }
 
-    const TokenId id = id_to_token_.size();
+    const TokenId id =
+        id_to_token_.size();
 
     id_to_token_.emplace_back(token);
 
@@ -25,29 +26,32 @@ Vocabulary::add(std::string_view token) {
 }
 
 Vocabulary::TokenId
-Vocabulary::find(std::string_view token) const noexcept {
+Vocabulary::find(sv token) const noexcept {
 
-    auto it = token_to_id_.find(std::string(token));
+    const auto it =
+        token_to_id_.find(str(token));
 
     if (it == token_to_id_.end()) {
-        return static_cast<TokenId>(-1);
+        return InvalidTokenId;
     }
 
     return it->second;
 }
 
-bool Vocabulary::contains(std::string_view token) const noexcept {
+bool Vocabulary::contains(
+    sv token
+) const noexcept {
 
-    return token_to_id_.find(std::string(token))
+    return token_to_id_.find(str(token))
         != token_to_id_.end();
 }
 
-std::size_t Vocabulary::size() const noexcept {
+sz Vocabulary::size() const noexcept {
 
     return id_to_token_.size();
 }
 
-const std::string&
+const str&
 Vocabulary::token(TokenId id) const {
 
     return id_to_token_.at(id);

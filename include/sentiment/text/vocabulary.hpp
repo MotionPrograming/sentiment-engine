@@ -1,16 +1,22 @@
-#include "sentiment/common/types.hpp"
-#include "sentiment/core/types.hpp"
-
 #pragma once
 
 #include "sentiment/core/types.hpp"
-#include <bits/stdc++.h>
+
+#include <limits>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
 namespace sentiment {
 
 class Vocabulary {
+
 public:
+
     using TokenId = sz;
+
+    static constexpr TokenId InvalidTokenId =
+        std::numeric_limits<TokenId>::max();
 
     TokenId add(sv token);
 
@@ -27,7 +33,9 @@ public:
     const str& token(TokenId id) const;
 
 private:
+
     std::unordered_map<str, TokenId> token_to_id_;
+
     vec<str> id_to_token_;
 };
 
