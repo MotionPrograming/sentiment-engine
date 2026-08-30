@@ -1,19 +1,13 @@
-#include "sentiment/common/types.hpp"
-#include "sentiment/core/types.hpp"
-
 #pragma once
 
 #include "sentiment/core/types.hpp"
 #include "sentiment/text/tokenizer.hpp"
 #include "sentiment/text/vocabulary.hpp"
-#include <bits/stdc++.h>
 
 namespace sentiment {
 
 class TfidfVectorizer {
 public:
-    using FeatureId = sz;
-
     explicit TfidfVectorizer(
         sz max_features = 50'000
     );
@@ -33,8 +27,11 @@ public:
 private:
     Tokenizer tokenizer_;
     Vocabulary vocabulary_;
+
     sz max_features_;
+
     vec<double> idf_;
+
     bool fitted_{false};
 };
 

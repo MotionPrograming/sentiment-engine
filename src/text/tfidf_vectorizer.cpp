@@ -1,43 +1,38 @@
 #include "sentiment/text/tfidf_vectorizer.hpp"
-using namespace std;
 
 #include <algorithm>
-using namespace std;
 #include <cmath>
-using namespace std;
+#include <unordered_map>
 #include <unordered_set>
-using namespace std;
+#include <utility>
 
 namespace sentiment {
 
-TfidfVectorizer::TfidfVectorizer(
-    std::size_t max_features
-)
+TfidfVectorizer::TfidfVectorizer(sz max_features)
     : max_features_(max_features) {
 }
 
 void TfidfVectorizer::fit(
-    const std::vector<std::string>& documents
+    const vec<str>& documents
 ) {
+    vocabulary_ = Vocabulary{};
+    idf_.clear();
+    fitted_ = false;
 
-    const std::size_t document_count =
-        documents.size();
-
-    if (document_count == 0) {
+    if (documents.empty() || max_features_ == 0) {
         return;
     }
 
-    std::unordered_map<std::string, std::size_t>
-        document_frequency;
+    const sz document_count = documents.size();
+
+    std::unordered_map<str, sz> document_frequency;
 
     for (const auto& document : documents) {
 
-        auto tokens =
+        const auto tokens =
             tokenizer_.tokenize(document);
 
-        std::unordered_set<std::string>
-            unique_tokens;
-
+        std::unordered_set<str> unique_tokens;
         unique_tokens.reserve(tokens.size());
 
         for (const auto& token : tokens) {
@@ -45,27 +40,32 @@ void TfidfVectorizer::fit(
         }
 
         for (const auto& token : unique_tokens) {
-
             ++document_frequency[token];
         }
     }
 
-    std::vector<std::pair<std::string, std::size_t>>
-        terms(
-            document_frequency.begin(),
-            document_frequency.end()
-        );
+    vec<std::pair<str, sz>> terms;
+
+    terms.reserve(document_frequency.size());
+
+    for (const auto& [term, df] : document_frequency) {
+        terms.emplace_back(term, df);
+    }
 
     std::sort(
         terms.begin(),
         terms.end(),
-        [](const auto& a, const auto& b) {
+        [](const auto& lhs, const auto& rhs) {
 
-            return a.second > b.second;
+            if (lhs.second != rhs.second) {
+                return lhs.second > rhs.second;
+            }
+
+            return lhs.first < rhs.first;
         }
     );
 
-    const std::size_t feature_count =
+    const sz feature_count =
         std::min(
             max_features_,
             terms.size()
@@ -73,15 +73,17 @@ void TfidfVectorizer::fit(
 
     idf_.resize(feature_count);
 
-    for (std::size_t i = 0; i < feature_count; ++i) {
+    for (sz i = 0; i < feature_count; ++i) {
 
         const auto& [term, df] = terms[i];
 
-        const auto id =
-            vocabulary_.add(term);
+        vocabulary_.add(term);
 
-        (void)id;
-
+        /*
+         * Smoothed IDF:
+         *
+         * idf = log((N + 1) / (df + 1)) + 1
+         */
         idf_[i] =
             std::log(
                 (1.0 + static_cast<double>(document_count)) /
@@ -92,50 +94,57 @@ void TfidfVectorizer::fit(
     fitted_ = true;
 }
 
-std::vector<double>
-TfidfVectorizer::transform(
-    std::string_view document
+vec<double> TfidfVectorizer::transform(
+    sv document
 ) const {
-
-    std::vector<double> result(
+    vec<double> result(
         vocabulary_.size(),
         0.0
     );
 
-    if (!fitted_) {
+    if (!fitted_ || vocabulary_.size() == 0) {
         return result;
     }
 
-    auto tokens =
+    const auto tokens =
         tokenizer_.tokenize(document);
 
+    /*
+     * Term frequency.
+     */
     for (const auto& token : tokens) {
 
         const auto id =
             vocabulary_.find(token);
 
-        if (id != static_cast<std::size_t>(-1) &&
-            id < result.size()) {
-
-            result[id] += 1.0;
+        if (id != static_cast<sz>(-1)) {
+            ++result[id];
         }
     }
 
-    double norm = 0.0;
-
-    for (std::size_t i = 0; i < result.size(); ++i) {
+    /*
+     * TF-IDF weighting.
+     */
+    for (sz i = 0; i < result.size(); ++i) {
 
         if (result[i] > 0.0) {
-
             result[i] *= idf_[i];
-
-            norm += result[i] * result[i];
         }
     }
 
-    if (norm > 0.0) {
+    /*
+     * L2 normalization.
+     */
+    double squared_norm = 0.0;
 
-        norm = std::sqrt(norm);
+    for (const auto value : result) {
+        squared_norm += value * value;
+    }
+
+    if (squared_norm > 0.0) {
+
+        const double norm =
+            std::sqrt(squared_norm);
 
         for (auto& value : result) {
             value /= norm;
@@ -145,9 +154,7 @@ TfidfVectorizer::transform(
     return result;
 }
 
-std::size_t
-TfidfVectorizer::vocabulary_size() const noexcept {
-
+sz TfidfVectorizer::vocabulary_size() const noexcept {
     return vocabulary_.size();
 }
 
