@@ -1,10 +1,6 @@
-#include "sentiment/common/types.hpp"
-#include "sentiment/core/types.hpp"
-
 #pragma once
 
 #include "sentiment/core/types.hpp"
-#include <bits/stdc++.h>
 
 namespace sentiment {
 
@@ -12,6 +8,14 @@ class LinearSVM {
 public:
     explicit LinearSVM(
         sz feature_count
+    );
+
+    void train(
+        const vec<vec<double>>& features,
+        const vec<Sentiment>& labels,
+        sz epochs = 5,
+        double learning_rate = 0.01,
+        double regularization = 0.0001
     );
 
     void set_weights(
@@ -29,6 +33,9 @@ public:
         const vec<double>& features
     ) const noexcept;
 
+    [[nodiscard]]
+    bool trained() const noexcept;
+
 private:
     static constexpr sz ClassCount = 3;
 
@@ -37,6 +44,8 @@ private:
     vec<vec<double>> weights_;
 
     arr<double, ClassCount> bias_{};
+
+    bool trained_{false};
 };
 
 } // namespace sentiment

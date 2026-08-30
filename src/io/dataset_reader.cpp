@@ -1,9 +1,9 @@
-#include <stdexcept>
 #include "sentiment/io/dataset_reader.hpp"
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <parquet/arrow/reader.h>
+
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -11,142 +11,362 @@ using namespace std;
 namespace sentiment {
 
 struct ParquetDatasetReader::Impl {
-    shared_ptr<arrow::Table> table;
 
-    shared_ptr<arrow::ChunkedArray> text_column;
-    shared_ptr<arrow::ChunkedArray> sentiment_column;
+    shared_ptr<arrow::RecordBatchReader> batch_reader;
+
+    shared_ptr<arrow::RecordBatch> current_batch;
+
+    shared_ptr<arrow::StringArray> text_array;
+
+    shared_ptr<arrow::Array> sentiment_array;
+
+    sz batch_size{4096};
 
     sz current_row{0};
-    sz total_rows{0};
 
-    // Cache current chunk state to avoid linear scans
-    sz current_chunk_idx{0};
-    sz chunk_offset{0};
+    sz total_rows_count{0};
 
-    shared_ptr<arrow::StringArray> current_text_array;
-    shared_ptr<arrow::Array> current_sentiment_array;
+    sz current_batch_row{0};
 
     bool valid{false};
 
-    explicit Impl(const str& file_path) {
-        // 1. Open Parquet file through Arrow filesystem layer
-        auto file_result = arrow::io::ReadableFile::Open(file_path);
-        if (!file_result.ok()) {
-            throw runtime_error("Failed to open Parquet file: " + file_result.status().ToString());
+    bool load_next_batch() {
+
+        current_batch.reset();
+        text_array.reset();
+        sentiment_array.reset();
+        current_batch_row = 0;
+
+        auto result =
+            batch_reader->Next();
+
+        if (!result.ok()) {
+            throw runtime_error(
+                "Failed to read Parquet batch: " +
+                result.status().ToString()
+            );
         }
 
-        shared_ptr<arrow::io::RandomAccessFile> input = *file_result;
+        current_batch = *result;
 
-        // 2. Create Parquet Arrow reader
-        auto reader_result = parquet::arrow::OpenFile(input, arrow::default_memory_pool());
-        if (!reader_result.ok()) {
-            throw runtime_error("Failed to create Parquet reader: " + reader_result.status().ToString());
+        if (!current_batch) {
+            return false;
         }
 
-        unique_ptr<parquet::arrow::FileReader> reader = move(*reader_result);
+        auto text_column =
+            current_batch->GetColumnByName(
+                "review_text"
+            );
 
-        // 3. Read the table
-        auto table_result = reader->ReadTable();
-        if (!table_result.ok()) {
-            throw runtime_error("Failed to read Parquet table: " + table_result.status().ToString());
+        auto sentiment_column =
+            current_batch->GetColumnByName(
+                "sentiment"
+            );
+
+        if (!text_column) {
+            throw runtime_error(
+                "Column 'review_text' not found"
+            );
         }
 
-        table = *table_result;
-
-        // 4. Locate required columns
-        text_column = table->GetColumnByName("review_text");
-        sentiment_column = table->GetColumnByName("sentiment");
-
-        if (!text_column) throw runtime_error("Required column 'review_text' not found");
-        if (!sentiment_column) throw runtime_error("Required column 'sentiment' not found");
-
-        total_rows = static_cast<sz>(table->num_rows());
-
-        if (total_rows > 0 && text_column->num_chunks() > 0) {
-            load_chunk(0);
+        if (!sentiment_column) {
+            throw runtime_error(
+                "Column 'sentiment' not found"
+            );
         }
 
-        valid = true;
+        text_array =
+            static_pointer_cast<arrow::StringArray>(
+                text_column
+            );
+
+        sentiment_array =
+            sentiment_column;
+
+        return true;
     }
 
-    void load_chunk(sz chunk_idx) {
-        current_chunk_idx = chunk_idx;
-        current_text_array = static_pointer_cast<arrow::StringArray>(text_column->chunk(chunk_idx));
-        current_sentiment_array = sentiment_column->chunk(chunk_idx);
+    explicit Impl(
+        const str& file_path,
+        sz requested_batch_size
+    )
+        : batch_size(
+              max<sz>(
+                  1,
+                  requested_batch_size
+              )
+          ) {
+
+        auto file_result =
+            arrow::io::ReadableFile::Open(
+                file_path
+            );
+
+        if (!file_result.ok()) {
+
+            throw runtime_error(
+                "Failed to open Parquet file: " +
+                file_result.status().ToString()
+            );
+        }
+
+        auto input =
+            *file_result;
+
+        auto reader_result =
+            parquet::arrow::OpenFile(
+                input,
+                arrow::default_memory_pool()
+            );
+
+        if (!reader_result.ok()) {
+
+            throw runtime_error(
+                "Failed to create Parquet reader: " +
+                reader_result.status().ToString()
+            );
+        }
+
+        unique_ptr<parquet::arrow::FileReader>
+            reader = move(*reader_result);
+
+        auto schema_result =
+            reader->GetSchema();
+
+        if (!schema_result.ok()) {
+
+            throw runtime_error(
+                "Failed to read Parquet schema: " +
+                schema_result.status().ToString()
+            );
+        }
+
+        auto schema =
+            *schema_result;
+
+        if (!schema->GetFieldByName(
+                "review_text")) {
+
+            throw runtime_error(
+                "Required column 'review_text' not found"
+            );
+        }
+
+        if (!schema->GetFieldByName(
+                "sentiment")) {
+
+            throw runtime_error(
+                "Required column 'sentiment' not found"
+            );
+        }
+
+        total_rows_count =
+            static_cast<sz>(
+                reader->parquet_reader()->metadata()->num_rows()
+            );
+
+        auto table_result =
+            reader->ReadTable();
+
+        if (!table_result.ok()) {
+
+            throw runtime_error(
+                "Failed to initialize Parquet table: " +
+                table_result.status().ToString()
+            );
+        }
+
+        auto table =
+            *table_result;
+
+        /*
+         * Create batches from Arrow table.
+         *
+         * This keeps processing bounded by batch_size
+         * instead of exposing the whole table to the
+         * application pipeline at once.
+         */
+
+        auto batches =
+            table->CombineChunks();
+
+        if (!batches.ok()) {
+
+            throw runtime_error(
+                "Failed to combine Arrow chunks: " +
+                batches.status().ToString()
+            );
+        }
+
+        auto combined_table =
+            *batches;
+
+        vector<shared_ptr<arrow::RecordBatch>>
+            record_batches;
+
+        auto batch_result =
+            combined_table->ToRecordBatches(
+                static_cast<int64_t>(batch_size)
+            );
+
+        if (!batch_result.ok()) {
+
+            throw runtime_error(
+                "Failed to create record batches: " +
+                batch_result.status().ToString()
+            );
+        }
+
+        record_batches =
+            *batch_result;
+
+        batch_reader =
+            make_shared<
+                arrow::RecordBatchReader
+            >(
+                arrow::RecordBatchReader::Make(
+                    record_batches,
+                    combined_table->schema()
+                )
+            );
+
+        /*
+         * The exact Arrow factory return differs
+         * between Arrow releases. If this constructor
+         * fails with your installed Arrow 25 API, we will
+         * switch this section to the native
+         * parquet RecordBatchReader API.
+         */
+
+        valid = true;
     }
 };
 
 ParquetDatasetReader::ParquetDatasetReader(
     const str& file_path,
     sz batch_size
-) {
-    (void)batch_size;
-    impl_ = make_unique<Impl>(file_path);
+)
+{
+    impl_ =
+        make_unique<Impl>(
+            file_path,
+            batch_size
+        );
 }
 
 ParquetDatasetReader::~ParquetDatasetReader() = default;
 
 bool ParquetDatasetReader::good() const noexcept {
-    return impl_ && impl_->valid;
+
+    return impl_ &&
+           impl_->valid;
 }
 
 sz ParquetDatasetReader::rows_read() const noexcept {
-    return impl_ ? impl_->current_row : 0;
+
+    return impl_
+        ? impl_->current_row
+        : 0;
 }
 
 sz ParquetDatasetReader::total_rows() const noexcept {
-    return impl_ ? impl_->total_rows : 0;
+
+    return impl_
+        ? impl_->total_rows_count
+        : 0;
 }
 
-bool ParquetDatasetReader::next(Review& review) {
-    if (!impl_ || !impl_->valid || impl_->current_row >= impl_->total_rows) {
+bool ParquetDatasetReader::next(
+    Review& review
+) {
+
+    if (!impl_ ||
+        !impl_->valid) {
+
         return false;
     }
 
-    // Check if we need to advance to the next Chunk
-    while (impl_->current_text_array && 
-           (impl_->current_row - impl_->chunk_offset) >= static_cast<sz>(impl_->current_text_array->length())) {
-        
-        impl_->chunk_offset += impl_->current_text_array->length();
-        impl_->current_chunk_idx++;
+    while (true) {
 
-        if (impl_->current_chunk_idx < static_cast<sz>(impl_->text_column->num_chunks())) {
-            impl_->load_chunk(impl_->current_chunk_idx);
-        } else {
-            return false;
+        if (!impl_->current_batch ||
+            impl_->current_batch_row >=
+                static_cast<sz>(
+                    impl_->current_batch->num_rows()
+                )) {
+
+            if (!impl_->load_next_batch()) {
+                return false;
+            }
         }
-    }
 
-    const sz local_idx = impl_->current_row - impl_->chunk_offset;
+        const sz row =
+            impl_->current_batch_row;
 
-    // Direct O(1) Memory Access
-    if (impl_->current_text_array->IsNull(local_idx) || impl_->current_sentiment_array->IsNull(local_idx)) {
+        ++impl_->current_batch_row;
         ++impl_->current_row;
-        return false;
+
+        if (impl_->text_array->IsNull(row) ||
+            impl_->sentiment_array->IsNull(row)) {
+
+            continue;
+        }
+
+        review.text =
+            impl_->text_array->GetString(row);
+
+        auto scalar_result =
+            impl_->sentiment_array->GetScalar(row);
+
+        if (!scalar_result.ok()) {
+
+            throw runtime_error(
+                "Failed to read sentiment value"
+            );
+        }
+
+        str sentiment =
+            (*scalar_result)->ToString();
+
+        transform(
+            sentiment.begin(),
+            sentiment.end(),
+            sentiment.begin(),
+            [](unsigned char c) {
+                return static_cast<char>(
+                    tolower(c)
+                );
+            }
+        );
+
+        if (sentiment == "negative") {
+
+            review.sentiment =
+                Sentiment::Negative;
+
+        } else if (sentiment == "neutral") {
+
+            review.sentiment =
+                Sentiment::Neutral;
+
+        } else if (sentiment == "positive") {
+
+            review.sentiment =
+                Sentiment::Positive;
+
+        } else {
+
+            throw runtime_error(
+                "Unknown sentiment label: " +
+                sentiment
+            );
+        }
+
+        if (review.text.empty()) {
+            continue;
+        }
+
+        return true;
     }
-
-    // Read Review Text
-    review.text = impl_->current_text_array->GetString(local_idx);
-
-    // Read Sentiment Label
-    str sentiment = impl_->current_sentiment_array->GetScalar(local_idx).ValueOrDie()->ToString();
-
-    for (char& c : sentiment) {
-        c = static_cast<char>(tolower(static_cast<unsigned char>(c)));
-    }
-
-    if (sentiment == "negative") {
-        review.sentiment = Sentiment::Negative;
-    } else if (sentiment == "neutral") {
-        review.sentiment = Sentiment::Neutral;
-    } else if (sentiment == "positive") {
-        review.sentiment = Sentiment::Positive;
-    } else {
-        throw runtime_error("Unknown sentiment label: " + sentiment);
-    }
-
-    ++impl_->current_row;
-    return true;
 }
 
-} // namespace sentiment
+}

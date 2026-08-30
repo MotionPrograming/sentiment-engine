@@ -1,20 +1,15 @@
-#include "sentiment/core/types.hpp"
-
 #pragma once
 
-#include <bits/stdc++.h>
+#include "sentiment/core/types.hpp"
+
+#include <limits>
+#include <cstdint>
 
 namespace sentiment {
 
-using u32 = std::uint32_t;
-using sz  = std::size_t;
-
-template <typename T>
-using vec = std::vector<T>;
-
 class SparseMatrixCSR {
 public:
-    using Index = u32;
+    using Index = std::uint32_t;
 
     SparseMatrixCSR() = default;
 
@@ -55,6 +50,8 @@ private:
     vec<Index> row_ptr_;
     vec<Index> col_indices_;
     vec<double> values_;
+
+    bool finalized_{false};
 };
 
 } // namespace sentiment

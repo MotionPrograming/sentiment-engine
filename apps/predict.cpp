@@ -1,6 +1,6 @@
 #include "sentiment/text/tfidf_vectorizer.hpp"
+#include "sentiment/ml/linear_svm.hpp"
 
-#include <cmath>
 #include <iomanip>
 #include <iostream>
 
@@ -8,17 +8,46 @@ int main() {
 
     using namespace sentiment;
 
+    // --------------------------------------------------------
+    // Training documents
+    // --------------------------------------------------------
+
     const vec<str> documents = {
-        "this app is great",
-        "this app is excellent",
-        "this app is crashing",
-        "the application keeps crashing",
-        "great application and excellent experience"
+        "excellent great amazing",
+        "great excellent good",
+        "amazing wonderful excellent",
+
+        "the product is okay",
+        "average normal experience",
+        "nothing special average",
+
+        "terrible bad awful",
+        "bad horrible experience",
+        "awful terrible product"
     };
 
-    std::cout << "========================================\n";
-    std::cout << " SentimentEngine - TF-IDF Test\n";
-    std::cout << "========================================\n\n";
+    const vec<Sentiment> labels = {
+        Sentiment::Positive,
+        Sentiment::Positive,
+        Sentiment::Positive,
+
+        Sentiment::Neutral,
+        Sentiment::Neutral,
+        Sentiment::Neutral,
+
+        Sentiment::Negative,
+        Sentiment::Negative,
+        Sentiment::Negative
+    };
+
+    std::cout
+        << "========================================\n"
+        << " SentimentEngine - Linear SVM Test\n"
+        << "========================================\n\n";
+
+    // --------------------------------------------------------
+    // TF-IDF
+    // --------------------------------------------------------
 
     TfidfVectorizer vectorizer(100);
 
@@ -26,50 +55,178 @@ int main() {
 
     vectorizer.fit(documents);
 
+    const sz feature_count =
+        vectorizer.vocabulary_size();
+
     std::cout
         << "Vocabulary size: "
-        << vectorizer.vocabulary_size()
+        << feature_count
         << "\n\n";
 
-    const str test_document =
-        "this app is crashing";
+    // --------------------------------------------------------
+    // Transform training data
+    // --------------------------------------------------------
 
-    const auto features =
-        vectorizer.transform(test_document);
+    vec<vec<double>> features;
+
+    features.reserve(documents.size());
+
+    for (const auto& document : documents) {
+
+        features.push_back(
+            vectorizer.transform(document)
+        );
+    }
 
     std::cout
-        << "Document: "
-        << test_document
+        << "Training vectors: "
+        << features.size()
         << "\n\n";
 
-    std::cout << "TF-IDF vector:\n";
+    // --------------------------------------------------------
+    // Train SVM
+    // --------------------------------------------------------
 
-    for (sz i = 0; i < features.size(); ++i) {
+    LinearSVM svm(feature_count);
 
-        if (features[i] > 0.0) {
+    std::cout << "Training Linear SVM...\n";
 
-            std::cout
-                << "feature[" << i << "] = "
-                << std::fixed
-                << std::setprecision(6)
-                << features[i]
-                << '\n';
+    svm.train(
+        features,
+        labels,
+        50,
+        0.05,
+        0.0001
+    );
+
+    std::cout
+        << "SVM trained: "
+        << std::boolalpha
+        << svm.trained()
+        << "\n\n";
+
+    // --------------------------------------------------------
+    // Training accuracy
+    // --------------------------------------------------------
+
+    sz correct = 0;
+
+    std::cout << "Training predictions:\n\n";
+
+    for (sz i = 0; i < documents.size(); ++i) {
+
+        const Prediction prediction =
+            svm.predict(features[i]);
+
+        const bool is_correct =
+            prediction.label == labels[i];
+
+        if (is_correct) {
+            ++correct;
         }
+
+        std::cout
+            << "[" << i + 1 << "] "
+            << documents[i]
+            << "\n";
+
+        std::cout
+            << "    expected: "
+            << to_string(labels[i])
+            << "\n";
+
+        std::cout
+            << "    predicted: "
+            << to_string(prediction.label)
+            << "\n";
+
+        std::cout
+            << "    score: "
+            << std::fixed
+            << std::setprecision(6)
+            << prediction.score
+            << "\n";
+
+        std::cout
+            << "    result: "
+            << (is_correct ? "PASS" : "FAIL")
+            << "\n\n";
     }
 
-    double norm = 0.0;
+    const double accuracy =
+        static_cast<double>(correct) /
+        static_cast<double>(documents.size());
 
-    for (const auto value : features) {
-        norm += value * value;
+    std::cout
+        << "Training accuracy: "
+        << std::fixed
+        << std::setprecision(2)
+        << accuracy * 100.0
+        << "%\n\n";
+
+    // --------------------------------------------------------
+    // Unseen prediction tests
+    // --------------------------------------------------------
+
+    const vec<str> test_documents = {
+        "excellent wonderful product",
+        "average product experience",
+        "terrible horrible product"
+    };
+
+    std::cout
+        << "Unseen prediction tests:\n\n";
+
+    for (const auto& document : test_documents) {
+
+        const auto test_features =
+            vectorizer.transform(document);
+
+        const Prediction prediction =
+            svm.predict(test_features);
+
+        std::cout
+            << "Text: "
+            << document
+            << "\n";
+
+        std::cout
+            << "Predicted: "
+            << to_string(prediction.label)
+            << "\n";
+
+        std::cout
+            << "Score: "
+            << std::fixed
+            << std::setprecision(6)
+            << prediction.score
+            << "\n\n";
+    }
+
+    // --------------------------------------------------------
+    // Final verification
+    // --------------------------------------------------------
+
+    if (!svm.trained()) {
+
+        std::cerr
+            << "ERROR: SVM was not marked as trained.\n";
+
+        return 1;
+    }
+
+    if (accuracy < 0.80) {
+
+        std::cerr
+            << "ERROR: Training accuracy below 80%.\n";
+
+        return 1;
     }
 
     std::cout
-        << "\nL2 norm: "
-        << std::sqrt(norm)
-        << '\n';
-
-    std::cout
-        << "\nTF-IDF test completed successfully.\n";
+        << "========================================\n"
+        << " Linear SVM test completed successfully.\n"
+        << "========================================\n";
 
     return 0;
 }
