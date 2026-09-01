@@ -1,39 +1,64 @@
 #pragma once
 
 #include "sentiment/core/types.hpp"
-#include "sentiment/io/dataset_reader.hpp"
+#include "sentiment/math/sparse_vector.hpp"
 #include "sentiment/text/tokenizer.hpp"
-#include "sentiment/text/tfidf_vectorizer.hpp"
+#include "sentiment/text/vocabulary.hpp"
 
 namespace sentiment {
 
-class TfidfTrainer {
+class TfidfVectorizer {
+
 public:
-    explicit TfidfTrainer(
+
+    explicit TfidfVectorizer(
         sz max_features = 50'000
     );
 
-    bool fit(
-        ParquetDatasetReader& reader
+    void fit(
+        const vec<str>& documents
     );
 
     [[nodiscard]]
-    TfidfVectorizer finalize() &&;
+    vec<double> transform(
+        sv document
+    ) const;
 
     [[nodiscard]]
-    sz vocabulary_size() const noexcept;
+    SparseVector transform_sparse(
+        sv document
+    ) const;
+
+    [[nodiscard]]
+    sz vocabulary_size()
+        const noexcept;
+
+    [[nodiscard]]
+    const Vocabulary&
+    vocabulary()
+        const noexcept;
+
+    [[nodiscard]]
+    const vec<double>&
+    idf()
+        const noexcept;
+
+    bool set_model_data(
+        Vocabulary vocabulary,
+        vec<double> idf
+    );
 
 private:
+
     Tokenizer tokenizer_;
+
+    Vocabulary vocabulary_;
 
     sz max_features_;
 
-    vec<u32> document_frequency_;
+    vec<double> idf_;
 
-    // Temporary vocabulary used during DF collection.
-    std::unordered_map<str, u32> df_;
-
-    sz document_count_{0};
+    bool fitted_{false};
 };
 
 } // namespace sentiment

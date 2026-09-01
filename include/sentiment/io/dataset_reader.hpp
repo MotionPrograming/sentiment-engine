@@ -2,7 +2,7 @@
 
 #include "sentiment/core/types.hpp"
 
-#include <bits/stdc++.h>
+#include <memory>
 
 using namespace std;
 

@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <unordered_map>
 
 namespace sentiment {
 
@@ -70,6 +71,11 @@ struct SparseVector {
     [[nodiscard]]
     sz size() const noexcept {
         return indices.size();
+    }
+
+    [[nodiscard]]
+    bool empty() const noexcept {
+        return indices.empty();
     }
 
     [[nodiscard]]

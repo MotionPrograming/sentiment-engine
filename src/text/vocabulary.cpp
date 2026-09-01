@@ -1,19 +1,20 @@
 #include "sentiment/text/vocabulary.hpp"
 
+#include <utility>
+
 namespace sentiment {
 
 Vocabulary::TokenId
 Vocabulary::add(sv token) {
 
-    const auto it =
-        token_to_id_.find(str(token));
+    auto it = token_to_id_.find(std::string(token));
 
     if (it != token_to_id_.end()) {
         return it->second;
     }
 
     const TokenId id =
-        id_to_token_.size();
+        static_cast<TokenId>(id_to_token_.size());
 
     id_to_token_.emplace_back(token);
 
@@ -28,26 +29,22 @@ Vocabulary::add(sv token) {
 Vocabulary::TokenId
 Vocabulary::find(sv token) const noexcept {
 
-    const auto it =
-        token_to_id_.find(str(token));
+    auto it = token_to_id_.find(std::string(token));
 
     if (it == token_to_id_.end()) {
-        return InvalidTokenId;
+        return InvalidId;
     }
 
     return it->second;
 }
 
-bool Vocabulary::contains(
-    sv token
-) const noexcept {
+bool Vocabulary::contains(sv token) const noexcept {
 
-    return token_to_id_.find(str(token))
+    return token_to_id_.find(std::string(token))
         != token_to_id_.end();
 }
 
 sz Vocabulary::size() const noexcept {
-
     return id_to_token_.size();
 }
 

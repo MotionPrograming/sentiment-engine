@@ -2,24 +2,171 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
+using namespace std;
+
 namespace sentiment {
+
+// ============================================================
+// Constructor
+// ============================================================
 
 TfidfVectorizer::TfidfVectorizer(
     sz max_features
 )
-    : max_features_(max_features) {
+    : max_features_(
+          max_features
+      ) {
 }
+
+
+// ============================================================
+// Collect unigram + bigram IDs
+// ============================================================
+
+void TfidfVectorizer::collect_term_ids(
+    sv document,
+    vec<u32>& ids
+) const {
+
+    ids.clear();
+
+    if (
+        document.empty() ||
+        !fitted_ ||
+        vocabulary_.size() == 0
+    ) {
+        return;
+    }
+
+    const auto tokens =
+        tokenizer_.tokenize(document);
+
+    if (tokens.empty())
+        return;
+
+    /*
+     * Reserve enough for:
+     *
+     *     unigrams + bigrams
+     */
+    ids.reserve(
+        tokens.size() * 2
+    );
+
+    /*
+     * --------------------------------------------------------
+     * Unigrams
+     * --------------------------------------------------------
+     */
+
+    for (
+        const string& token :
+        tokens
+    ) {
+
+        if (token.empty())
+            continue;
+
+        const auto id =
+            vocabulary_.find(token);
+
+        if (
+            id !=
+            Vocabulary::InvalidId
+        ) {
+
+            ids.push_back(
+                static_cast<u32>(id)
+            );
+        }
+    }
+
+    /*
+     * --------------------------------------------------------
+     * Bigrams
+     * --------------------------------------------------------
+     *
+     * Same representation used during training:
+     *
+     * token1_token2
+     * --------------------------------------------------------
+     */
+
+    if (tokens.size() >= 2) {
+
+        string bigram;
+
+        for (
+            sz i = 0;
+            i + 1 < tokens.size();
+            ++i
+        ) {
+
+            if (
+                tokens[i].empty() ||
+                tokens[i + 1].empty()
+            ) {
+                continue;
+            }
+
+            bigram.clear();
+
+            bigram.reserve(
+                tokens[i].size() +
+                tokens[i + 1].size() +
+                1
+            );
+
+            bigram.append(
+                tokens[i]
+            );
+
+            bigram.push_back('_');
+
+            bigram.append(
+                tokens[i + 1]
+            );
+
+            const auto id =
+                vocabulary_.find(
+                    bigram
+                );
+
+            if (
+                id !=
+                Vocabulary::InvalidId
+            ) {
+
+                ids.push_back(
+                    static_cast<u32>(id)
+                );
+            }
+        }
+    }
+}
+
+
+// ============================================================
+// Fit
+// ============================================================
 
 void TfidfVectorizer::fit(
     const vec<str>& documents
 ) {
-    vocabulary_ = Vocabulary{};
+
+    vocabulary_ =
+        Vocabulary{};
+
     idf_.clear();
-    fitted_ = false;
+
+    fitted_ =
+        false;
 
     if (
         documents.empty() ||
@@ -28,211 +175,529 @@ void TfidfVectorizer::fit(
         return;
     }
 
-    const sz document_count =
-        documents.size();
+    unordered_map<
+        string,
+        u64
+    > document_frequency;
 
-    std::unordered_map<str, sz>
-        document_frequency;
+    document_frequency.reserve(
+        max_features_ * 4
+    );
 
-    for (const auto& document : documents) {
+    u64 document_count =
+        0;
+
+    /*
+     * Reusable tokenizer-term set.
+     *
+     * Avoids allocating a new hash table for every
+     * document.
+     */
+    unordered_set<string> terms;
+
+    terms.reserve(256);
+
+    for (
+        const string& document :
+        documents
+    ) {
 
         const auto tokens =
-            tokenizer_.tokenize(document);
+            tokenizer_.tokenize(
+                document
+            );
 
-        std::unordered_set<str>
-            unique_tokens;
+        if (tokens.empty())
+            continue;
 
-        unique_tokens.reserve(
-            tokens.size()
-        );
+        terms.clear();
 
-        for (const auto& token : tokens) {
-            unique_tokens.insert(token);
+        /*
+         * ----------------------------------------------------
+         * Unigrams
+         * ----------------------------------------------------
+         */
+
+        for (
+            const string& token :
+            tokens
+        ) {
+
+            if (!token.empty())
+                terms.emplace(token);
         }
 
-        for (const auto& token : unique_tokens) {
-            ++document_frequency[token];
+        /*
+         * ----------------------------------------------------
+         * Bigrams
+         * ----------------------------------------------------
+         */
+
+        string bigram;
+
+        if (tokens.size() >= 2) {
+
+            for (
+                sz i = 0;
+                i + 1 < tokens.size();
+                ++i
+            ) {
+
+                if (
+                    tokens[i].empty() ||
+                    tokens[i + 1].empty()
+                ) {
+                    continue;
+                }
+
+                bigram.clear();
+
+                bigram.reserve(
+                    tokens[i].size() +
+                    tokens[i + 1].size() +
+                    1
+                );
+
+                bigram.append(
+                    tokens[i]
+                );
+
+                bigram.push_back('_');
+
+                bigram.append(
+                    tokens[i + 1]
+                );
+
+                terms.emplace(
+                    bigram
+                );
+            }
+        }
+
+        ++document_count;
+
+        /*
+         * Each term contributes at most once per document.
+         */
+        for (
+            const string& term :
+            terms
+        ) {
+
+            ++document_frequency[term];
         }
     }
 
-    vec<std::pair<str, sz>> terms;
+    if (document_count == 0)
+        return;
 
-    terms.reserve(
+    /*
+     * --------------------------------------------------------
+     * Feature selection
+     * --------------------------------------------------------
+     */
+
+    vec<pair<string, u64>>
+        terms_sorted;
+
+    terms_sorted.reserve(
         document_frequency.size()
     );
 
-    for (const auto& [term, df] :
-         document_frequency) {
+    for (
+        auto& entry :
+        document_frequency
+    ) {
 
-        terms.emplace_back(
-            term,
-            df
+        terms_sorted.emplace_back(
+            std::move(entry.first),
+            entry.second
         );
     }
 
-    std::sort(
-        terms.begin(),
-        terms.end(),
-        [](const auto& lhs,
-           const auto& rhs) {
+    sort(
+        terms_sorted.begin(),
+        terms_sorted.end(),
+        [](
+            const auto& lhs,
+            const auto& rhs
+        ) {
 
-            if (lhs.second != rhs.second) {
-                return lhs.second > rhs.second;
+            if (
+                lhs.second !=
+                rhs.second
+            ) {
+
+                return lhs.second >
+                       rhs.second;
             }
 
-            return lhs.first < rhs.first;
+            return lhs.first <
+                   rhs.first;
         }
     );
 
-    const sz feature_count =
-        std::min(
-            max_features_,
-            terms.size()
+    /*
+     * --------------------------------------------------------
+     * Minimum DF
+     *
+     * Keep consistent with train.cpp.
+     * --------------------------------------------------------
+     */
+
+    constexpr u64 MinimumDocumentFrequency = 3;
+
+    sz feature_count = 0;
+
+    for (
+        const auto& [term, df] :
+        terms_sorted
+    ) {
+
+        if (
+            df < MinimumDocumentFrequency
+        ) {
+            continue;
+        }
+
+        ++feature_count;
+
+        if (
+            feature_count >=
+            max_features_
+        ) {
+            break;
+        }
+    }
+
+    if (feature_count == 0)
+        return;
+
+    vocabulary_ =
+        Vocabulary{};
+
+    idf_.resize(
+        feature_count
+    );
+
+    const double N =
+        static_cast<double>(
+            document_count
         );
 
-    idf_.resize(feature_count);
+    sz output_index = 0;
 
-    for (sz i = 0;
-         i < feature_count;
-         ++i) {
+    for (
+        const auto& [term, df] :
+        terms_sorted
+    ) {
 
-        const auto& [term, df] =
-            terms[i];
+        if (
+            df < MinimumDocumentFrequency
+        ) {
+            continue;
+        }
 
-        vocabulary_.add(term);
+        vocabulary_.add(
+            term
+        );
 
         /*
          * Smoothed IDF:
          *
-         * log((N + 1) / (df + 1)) + 1
+         * log((1 + N)/(1 + df)) + 1
          */
-        idf_[i] =
+
+        const double value =
             std::log(
+                (1.0 + N) /
                 (1.0 +
-                 static_cast<double>(
-                     document_count
-                 )) /
-                (1.0 +
-                 static_cast<double>(
-                     df
-                 ))
-            ) + 1.0;
-    }
+                 static_cast<double>(df))
+            )
+            +
+            1.0;
 
-    fitted_ = true;
-}
+        idf_[output_index] =
+            (
+                std::isfinite(value) &&
+                value > 0.0
+            )
+                ? value
+                : 1.0;
 
-void TfidfVectorizer::fit_stream(
-    sz document_count,
-    const std::function<bool(str&)>& next_document
-) {
-    vocabulary_ = Vocabulary{};
-    idf_.clear();
-    fitted_ = false;
+        ++output_index;
 
-    if (
-        document_count == 0 ||
-        max_features_ == 0 ||
-        !next_document
-    ) {
-        return;
-    }
-
-    std::unordered_map<str, sz>
-        document_frequency;
-
-    str document;
-
-    for (sz document_index = 0;
-         document_index < document_count;
-         ++document_index) {
-
-        document.clear();
-
-        if (!next_document(document)) {
+        if (
+            output_index >=
+            feature_count
+        ) {
             break;
         }
-
-        const auto tokens =
-            tokenizer_.tokenize(document);
-
-        std::unordered_set<str>
-            unique_tokens;
-
-        unique_tokens.reserve(
-            tokens.size()
-        );
-
-        for (const auto& token : tokens) {
-            unique_tokens.insert(token);
-        }
-
-        for (const auto& token : unique_tokens) {
-            ++document_frequency[token];
-        }
     }
 
-    vec<std::pair<str, sz>> terms;
+    fitted_ =
+        vocabulary_.size() ==
+        idf_.size() &&
+        vocabulary_.size() > 0;
+}
 
-    terms.reserve(
-        document_frequency.size()
+
+// ============================================================
+// Sparse transform
+// ============================================================
+
+SparseVector
+TfidfVectorizer::transform_sparse(
+    sv document
+) const {
+
+    SparseVector result;
+
+    if (
+        !fitted_ ||
+        vocabulary_.size() == 0 ||
+        idf_.size() !=
+            vocabulary_.size() ||
+        document.empty()
+    ) {
+
+        return result;
+    }
+
+    const auto tokens =
+        tokenizer_.tokenize(
+            document
+        );
+
+    if (tokens.empty())
+        return result;
+
+    /*
+     * --------------------------------------------------------
+     * Instead of map<string,double>:
+     *
+     *     collect vocabulary IDs
+     *     sort integer IDs
+     *     aggregate duplicates
+     *
+     * This is considerably cheaper.
+     * --------------------------------------------------------
+     */
+
+    vec<u32> ids;
+
+    ids.reserve(
+        tokens.size() * 2
     );
 
-    for (const auto& [term, df] :
-         document_frequency) {
+    /*
+     * Unigrams.
+     */
 
-        terms.emplace_back(
-            term,
-            df
-        );
+    for (
+        const string& token :
+        tokens
+    ) {
+
+        if (token.empty())
+            continue;
+
+        const auto id =
+            vocabulary_.find(token);
+
+        if (
+            id !=
+            Vocabulary::InvalidId
+        ) {
+
+            ids.push_back(
+                static_cast<u32>(id)
+            );
+        }
     }
 
-    std::sort(
-        terms.begin(),
-        terms.end(),
-        [](const auto& lhs,
-           const auto& rhs) {
+    /*
+     * Bigrams.
+     */
 
-            if (lhs.second != rhs.second) {
-                return lhs.second > rhs.second;
+    if (tokens.size() >= 2) {
+
+        string bigram;
+
+        for (
+            sz i = 0;
+            i + 1 < tokens.size();
+            ++i
+        ) {
+
+            if (
+                tokens[i].empty() ||
+                tokens[i + 1].empty()
+            ) {
+                continue;
             }
 
-            return lhs.first < rhs.first;
+            bigram.clear();
+
+            bigram.reserve(
+                tokens[i].size() +
+                tokens[i + 1].size() +
+                1
+            );
+
+            bigram.append(
+                tokens[i]
+            );
+
+            bigram.push_back('_');
+
+            bigram.append(
+                tokens[i + 1]
+            );
+
+            const auto id =
+                vocabulary_.find(
+                    bigram
+                );
+
+            if (
+                id !=
+                Vocabulary::InvalidId
+            ) {
+
+                ids.push_back(
+                    static_cast<u32>(id)
+                );
+            }
         }
-    );
-
-    const sz feature_count =
-        std::min(
-            max_features_,
-            terms.size()
-        );
-
-    idf_.resize(feature_count);
-
-    for (sz i = 0;
-         i < feature_count;
-         ++i) {
-
-        const auto& [term, df] =
-            terms[i];
-
-        vocabulary_.add(term);
-
-        idf_[i] =
-            std::log(
-                (1.0 +
-                 static_cast<double>(
-                     document_count
-                 )) /
-                (1.0 +
-                 static_cast<double>(
-                     df
-                 ))
-            ) + 1.0;
     }
 
-    fitted_ = feature_count > 0;
+    if (ids.empty())
+        return result;
+
+    sort(
+        ids.begin(),
+        ids.end()
+    );
+
+    result.indices.reserve(
+        ids.size()
+    );
+
+    result.values.reserve(
+        ids.size()
+    );
+
+    double squared_norm =
+        0.0;
+
+    sz i = 0;
+
+    while (
+        i < ids.size()
+    ) {
+
+        const u32 index =
+            ids[i];
+
+        sz count = 1;
+
+        ++i;
+
+        while (
+            i < ids.size() &&
+            ids[i] == index
+        ) {
+
+            ++count;
+            ++i;
+        }
+
+        if (
+            static_cast<sz>(index) >=
+            idf_.size()
+        ) {
+            continue;
+        }
+
+        /*
+         * Sublinear TF:
+         *
+         * 1 + log(tf)
+         */
+
+        const double tf =
+            1.0 +
+            std::log(
+                static_cast<double>(count)
+            );
+
+        const double value =
+            tf *
+            idf_[index];
+
+        if (
+            !std::isfinite(value) ||
+            value <= 0.0
+        ) {
+            continue;
+        }
+
+        result.indices.push_back(
+            index
+        );
+
+        result.values.push_back(
+            value
+        );
+
+        squared_norm +=
+            value * value;
+    }
+
+    if (
+        result.empty() ||
+        !std::isfinite(squared_norm) ||
+        squared_norm <= 0.0
+    ) {
+
+        result.clear();
+
+        return result;
+    }
+
+    const double inverse_norm =
+        1.0 /
+        std::sqrt(
+            squared_norm
+        );
+
+    if (
+        !std::isfinite(inverse_norm) ||
+        inverse_norm <= 0.0
+    ) {
+
+        result.clear();
+
+        return result;
+    }
+
+    for (
+        double& value :
+        result.values
+    ) {
+
+        value *=
+            inverse_norm;
+    }
+
+    return result;
 }
+
+
+// ============================================================
+// Dense transform
+// ============================================================
 
 vec<double>
 TfidfVectorizer::transform(
@@ -251,142 +716,42 @@ TfidfVectorizer::transform(
         return result;
     }
 
-    const auto tokens =
-        tokenizer_.tokenize(document);
+    const SparseVector sparse =
+        transform_sparse(
+            document
+        );
 
-    for (const auto& token : tokens) {
+    const sz count =
+        std::min(
+            sparse.indices.size(),
+            sparse.values.size()
+        );
 
-        const auto id =
-            vocabulary_.find(token);
-
-        if (
-            id != Vocabulary::InvalidTokenId
-        ) {
-            ++result[id];
-        }
-    }
-
-    for (sz i = 0;
-         i < result.size();
-         ++i) {
-
-        if (result[i] > 0.0) {
-
-            result[i] *= idf_[i];
-        }
-    }
-
-    double squared_norm = 0.0;
-
-    for (const auto value : result) {
-        squared_norm +=
-            value * value;
-    }
-
-    if (squared_norm > 0.0) {
-
-        const double norm =
-            std::sqrt(squared_norm);
-
-        for (auto& value : result) {
-            value /= norm;
-        }
-    }
-
-    return result;
-}
-
-SparseVector
-TfidfVectorizer::transform_sparse(
-    sv document
-) const {
-
-    SparseVector result;
-
-    if (
-        !fitted_ ||
-        vocabulary_.size() == 0
+    for (
+        sz i = 0;
+        i < count;
+        ++i
     ) {
-        return result;
-    }
 
-    const auto tokens =
-        tokenizer_.tokenize(document);
-
-    /*
-     * TF counts only active vocabulary
-     * features.
-     */
-    std::unordered_map<sz, double>
-        term_frequency;
-
-    term_frequency.reserve(
-        tokens.size()
-    );
-
-    for (const auto& token : tokens) {
-
-        const auto id =
-            vocabulary_.find(token);
+        const sz index =
+            sparse.indices[i];
 
         if (
-            id != Vocabulary::InvalidTokenId
+            index < result.size()
         ) {
-            ++term_frequency[id];
-        }
-    }
 
-    if (term_frequency.empty()) {
-        return result;
-    }
-
-    /*
-     * Calculate unnormalized TF-IDF first.
-     */
-    result.reserve(
-        term_frequency.size()
-    );
-
-    double squared_norm = 0.0;
-
-    for (const auto& [id, tf] :
-         term_frequency) {
-
-        if (id >= idf_.size()) {
-            continue;
-        }
-
-        const double value =
-            tf * idf_[id];
-
-        if (value == 0.0) {
-            continue;
-        }
-
-        result.indices.push_back(id);
-        result.values.push_back(value);
-
-        squared_norm +=
-            value * value;
-    }
-
-    /*
-     * L2 normalization.
-     */
-    if (squared_norm > 0.0) {
-
-        const double norm =
-            std::sqrt(squared_norm);
-
-        for (auto& value :
-             result.values) {
-
-            value /= norm;
+            result[index] =
+                sparse.values[i];
         }
     }
 
     return result;
 }
+
+
+// ============================================================
+// Accessors
+// ============================================================
 
 const Vocabulary&
 TfidfVectorizer::vocabulary()
@@ -395,12 +760,25 @@ TfidfVectorizer::vocabulary()
     return vocabulary_;
 }
 
+
 const vec<double>&
 TfidfVectorizer::idf()
     const noexcept {
 
     return idf_;
 }
+
+
+sz TfidfVectorizer::vocabulary_size()
+    const noexcept {
+
+    return vocabulary_.size();
+}
+
+
+// ============================================================
+// Set model data
+// ============================================================
 
 bool TfidfVectorizer::set_model_data(
     Vocabulary vocabulary,
@@ -409,12 +787,33 @@ bool TfidfVectorizer::set_model_data(
 
     if (
         vocabulary.size() == 0 ||
-        vocabulary.size() != idf.size()
+        vocabulary.size() !=
+            idf.size()
     ) {
 
         fitted_ = false;
+        vocabulary_ = Vocabulary{};
+        idf_.clear();
 
         return false;
+    }
+
+    for (
+        const double value :
+        idf
+    ) {
+
+        if (
+            !std::isfinite(value) ||
+            value <= 0.0
+        ) {
+
+            fitted_ = false;
+            vocabulary_ = Vocabulary{};
+            idf_.clear();
+
+            return false;
+        }
     }
 
     vocabulary_ =
@@ -423,15 +822,233 @@ bool TfidfVectorizer::set_model_data(
     idf_ =
         std::move(idf);
 
-    fitted_ = true;
+    fitted_ =
+        true;
 
     return true;
 }
 
-sz TfidfVectorizer::vocabulary_size()
-    const noexcept {
 
-    return vocabulary_.size();
+// ============================================================
+// Save
+// ============================================================
+
+bool TfidfVectorizer::save(
+    const str& path
+) const {
+
+    if (
+        !fitted_ ||
+        vocabulary_.size() == 0 ||
+        vocabulary_.size() !=
+            idf_.size()
+    ) {
+        return false;
+    }
+
+    ofstream out(
+        path,
+        ios::binary
+    );
+
+    if (!out)
+        return false;
+
+    static constexpr char Magic[] =
+        "SENTTFIDF4";
+
+    out.write(
+        Magic,
+        sizeof(Magic)
+    );
+
+    const u64 n =
+        static_cast<u64>(
+            vocabulary_.size()
+        );
+
+    out.write(
+        reinterpret_cast<const char*>(&n),
+        sizeof(n)
+    );
+
+    for (
+        sz i = 0;
+        i < vocabulary_.size();
+        ++i
+    ) {
+
+        const str& token =
+            vocabulary_.token(
+                static_cast<
+                    Vocabulary::TokenId
+                >(i)
+            );
+
+        const u64 length =
+            static_cast<u64>(
+                token.size()
+            );
+
+        out.write(
+            reinterpret_cast<
+                const char*
+            >(&length),
+            sizeof(length)
+        );
+
+        out.write(
+            token.data(),
+            static_cast<streamsize>(
+                token.size()
+            )
+        );
+
+        out.write(
+            reinterpret_cast<
+                const char*
+            >(&idf_[i]),
+            sizeof(double)
+        );
+    }
+
+    return static_cast<bool>(out);
+}
+
+
+// ============================================================
+// Load
+// ============================================================
+
+bool TfidfVectorizer::load(
+    const str& path
+) {
+
+    ifstream in(
+        path,
+        ios::binary
+    );
+
+    if (!in)
+        return false;
+
+    static constexpr char Magic[] =
+        "SENTTFIDF4";
+
+    char magic[
+        sizeof(Magic)
+    ]{};
+
+    in.read(
+        magic,
+        sizeof(magic)
+    );
+
+    if (
+        !in ||
+        string(
+            magic,
+            sizeof(magic)
+        ) !=
+        string(
+            Magic,
+            sizeof(Magic)
+        )
+    ) {
+
+        return false;
+    }
+
+    u64 n = 0;
+
+    in.read(
+        reinterpret_cast<char*>(&n),
+        sizeof(n)
+    );
+
+    if (
+        !in ||
+        n == 0 ||
+        n > 10'000'000ULL
+    ) {
+
+        return false;
+    }
+
+    Vocabulary vocabulary;
+
+    vec<double> idf(
+        static_cast<sz>(n)
+    );
+
+    for (
+        u64 i = 0;
+        i < n;
+        ++i
+    ) {
+
+        u64 length = 0;
+
+        in.read(
+            reinterpret_cast<char*>(&length),
+            sizeof(length)
+        );
+
+        if (
+            !in ||
+            length > 1'000'000ULL
+        ) {
+
+            return false;
+        }
+
+        str token(
+            static_cast<sz>(length),
+            '\0'
+        );
+
+        in.read(
+            token.data(),
+            static_cast<streamsize>(
+                length
+            )
+        );
+
+        in.read(
+            reinterpret_cast<char*>(
+                &idf[
+                    static_cast<sz>(i)
+                ]
+            ),
+            sizeof(double)
+        );
+
+        if (!in)
+            return false;
+
+        if (
+            !std::isfinite(
+                idf[
+                    static_cast<sz>(i)
+                ]
+            ) ||
+            idf[
+                static_cast<sz>(i)
+            ] <= 0.0
+        ) {
+
+            return false;
+        }
+
+        vocabulary.add(
+            token
+        );
+    }
+
+    return set_model_data(
+        std::move(vocabulary),
+        std::move(idf)
+    );
 }
 
 } // namespace sentiment

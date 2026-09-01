@@ -1,229 +1,541 @@
-#include "sentiment/text/tfidf_vectorizer.hpp"
-#include "sentiment/ml/linear_svm.hpp"
 
+#include "sentiment/ml/linear_svm.hpp"
+#include "sentiment/text/tfidf_vectorizer.hpp"
+
+#include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <limits>
+#include <string>
+#include <vector>
 
-int main() {
+using namespace std;
+using namespace sentiment;
 
-    using namespace sentiment;
+namespace {
 
-    // --------------------------------------------------------
-    // Training documents
-    // --------------------------------------------------------
+static constexpr const char* Names[] = {
+    "Negative",
+    "Neutral",
+    "Positive"
+};
 
-    const vec<str> documents = {
-        "excellent great amazing",
-        "great excellent good",
-        "amazing wonderful excellent",
+static constexpr size_t ClassCount = 3;
 
-        "the product is okay",
-        "average normal experience",
-        "nothing special average",
 
-        "terrible bad awful",
-        "bad horrible experience",
-        "awful terrible product"
-    };
+/*
+ * ============================================================
+ * Convert SVM decision scores to softmax confidence values.
+ *
+ * NOTE:
+ * These are confidence scores, NOT calibrated probabilities.
+ * Proper calibration requires a held-out calibration dataset.
+ * ============================================================
+ */
+static vector<double>
+softmax_confidence(
+    const auto& scores
+)
+{
+    vector<double> probabilities(
+        ClassCount,
+        0.0
+    );
 
-    const vec<Sentiment> labels = {
-        Sentiment::Positive,
-        Sentiment::Positive,
-        Sentiment::Positive,
+    double maximum_score =
+        -numeric_limits<double>::infinity();
 
-        Sentiment::Neutral,
-        Sentiment::Neutral,
-        Sentiment::Neutral,
+    for (
+        size_t i = 0;
+        i < ClassCount;
+        ++i
+    ) {
 
-        Sentiment::Negative,
-        Sentiment::Negative,
-        Sentiment::Negative
-    };
-
-    std::cout
-        << "========================================\n"
-        << " SentimentEngine - Linear SVM Test\n"
-        << "========================================\n\n";
-
-    // --------------------------------------------------------
-    // TF-IDF
-    // --------------------------------------------------------
-
-    TfidfVectorizer vectorizer(100);
-
-    std::cout << "Fitting TF-IDF...\n";
-
-    vectorizer.fit(documents);
-
-    const sz feature_count =
-        vectorizer.vocabulary_size();
-
-    std::cout
-        << "Vocabulary size: "
-        << feature_count
-        << "\n\n";
-
-    // --------------------------------------------------------
-    // Transform training data to SparseVector
-    // --------------------------------------------------------
-
-    vec<SparseVector> features;
-
-    features.reserve(documents.size());
-
-    for (const auto& document : documents) {
-
-        features.push_back(
-            vectorizer.transform_sparse(document)
-        );
-    }
-
-    std::cout
-        << "Training vectors: "
-        << features.size()
-        << "\n\n";
-
-    // --------------------------------------------------------
-    // Train SVM
-    // --------------------------------------------------------
-
-    LinearSVM svm(feature_count);
-
-    std::cout
-        << "Training Linear SVM...\n";
-
-    constexpr int epochs = 50;
-    constexpr double learning_rate = 0.05;
-    constexpr double regularization = 0.0001;
-
-    for (int epoch = 0;
-         epoch < epochs;
-         ++epoch) {
-
-        for (sz i = 0;
-             i < features.size();
-             ++i) {
-
-            svm.train_sample(
-                features[i],
-                labels[i],
-                learning_rate,
-                regularization
+        maximum_score =
+            max(
+                maximum_score,
+                scores[i]
             );
+    }
+
+
+    double sum =
+        0.0;
+
+    for (
+        size_t i = 0;
+        i < ClassCount;
+        ++i
+    ) {
+
+        probabilities[i] =
+            exp(
+                scores[i] -
+                maximum_score
+            );
+
+        sum +=
+            probabilities[i];
+    }
+
+
+    if (
+        sum > 0.0
+    ) {
+
+        for (
+            double& probability :
+            probabilities
+        ) {
+
+            probability /=
+                sum;
         }
     }
 
-    std::cout
-        << "SVM trained: "
-        << std::boolalpha
-        << svm.trained()
+
+    return probabilities;
+}
+
+
+/*
+ * ============================================================
+ * Confidence level
+ * ============================================================
+ */
+static const char*
+confidence_level(
+    double confidence
+)
+{
+    if (
+        confidence >= 0.80
+    ) {
+
+        return "HIGH";
+    }
+
+    if (
+        confidence >= 0.60
+    ) {
+
+        return "MEDIUM";
+    }
+
+    if (
+        confidence >= 0.45
+    ) {
+
+        return "LOW";
+    }
+
+    return "UNCERTAIN";
+}
+
+
+/*
+ * ============================================================
+ * Production-style prediction policy
+ * ============================================================
+ */
+static const char*
+policy(
+    double confidence,
+    double margin
+)
+{
+    if (
+        confidence < 0.45
+    ) {
+
+        return "ABSTAIN";
+    }
+
+    if (
+        confidence < 0.60 ||
+        margin < 0.15
+    ) {
+
+        return "REVIEW";
+    }
+
+    return "ACCEPT";
+}
+
+} // namespace
+
+
+int main(
+    int argc,
+    char* argv[]
+)
+{
+    const string model_dir =
+        argc > 1
+            ? argv[1]
+            : "../models";
+
+    const string text =
+        argc > 2
+            ? argv[2]
+            : "This product is excellent and I really love it";
+
+
+    const string tfidf_path =
+        model_dir +
+        "/tfidf.model";
+
+    const string svm_path =
+        model_dir +
+        "/svm.model";
+
+
+    /*
+     * ========================================================
+     * Load TF-IDF
+     * ========================================================
+     */
+
+    TfidfVectorizer vectorizer;
+
+    if (
+        !vectorizer.load(
+            tfidf_path
+        )
+    ) {
+
+        cerr
+            << "ERROR: Cannot load TF-IDF model:\n"
+            << tfidf_path
+            << '\n';
+
+        return 2;
+    }
+
+
+    /*
+     * ========================================================
+     * Load SVM
+     *
+     * LinearSVM::load() returns void.
+     * Therefore do NOT use:
+     *
+     *     if (!svm.load(...))
+     * ========================================================
+     */
+
+    LinearSVM svm(1);
+
+    try {
+
+        svm.load(
+            svm_path
+        );
+
+    } catch (
+        const exception& e
+    ) {
+
+        cerr
+            << "ERROR: Cannot load SVM model:\n"
+            << svm_path
+            << '\n'
+            << "Reason: "
+            << e.what()
+            << '\n';
+
+        return 2;
+    }
+
+
+    /*
+     * ========================================================
+     * Feature compatibility
+     * ========================================================
+     */
+
+    if (
+        svm.feature_count() !=
+        vectorizer.vocabulary_size()
+    ) {
+
+        cerr
+            << "ERROR: Model feature mismatch.\n"
+            << "TF-IDF features : "
+            << vectorizer.vocabulary_size()
+            << '\n'
+            << "SVM features    : "
+            << svm.feature_count()
+            << '\n';
+
+        return 2;
+    }
+
+
+    /*
+     * ========================================================
+     * Transform input text
+     * ========================================================
+     */
+
+    const SparseVector features =
+        vectorizer.transform_sparse(
+            text
+        );
+
+
+    if (
+        features.empty()
+    ) {
+
+        cerr
+            << "ERROR: No known features found "
+               "in input text.\n";
+
+        return 3;
+    }
+
+
+    /*
+     * ========================================================
+     * Predict
+     *
+     * LinearSVM::predict() returns Sentiment directly.
+     * ========================================================
+     */
+
+    const Sentiment prediction =
+        svm.predict(
+            features
+        );
+
+
+    /*
+     * ========================================================
+     * Decision scores
+     * ========================================================
+     */
+
+    const auto scores =
+        svm.decision_scores(
+            features
+        );
+
+
+    const size_t label =
+        static_cast<size_t>(
+            prediction
+        );
+
+
+    if (
+        label >= ClassCount
+    ) {
+
+        cerr
+            << "ERROR: Invalid predicted class: "
+            << label
+            << '\n';
+
+        return 4;
+    }
+
+
+    /*
+     * ========================================================
+     * Convert scores to confidence distribution
+     * ========================================================
+     */
+
+    const vector<double> probabilities =
+        softmax_confidence(
+            scores
+        );
+
+
+    const double confidence =
+        probabilities[label];
+
+
+    /*
+     * ========================================================
+     * Find best and second-best decision scores
+     * ========================================================
+     */
+
+    double first =
+        -numeric_limits<double>::infinity();
+
+    double second =
+        -numeric_limits<double>::infinity();
+
+
+    for (
+        size_t i = 0;
+        i < ClassCount;
+        ++i
+    ) {
+
+        const double score =
+            scores[i];
+
+
+        if (
+            score > first
+        ) {
+
+            second =
+                first;
+
+            first =
+                score;
+
+        } else if (
+            score > second
+        ) {
+
+            second =
+                score;
+        }
+    }
+
+
+    const double margin =
+        first -
+        second;
+
+
+    /*
+     * ========================================================
+     * Output
+     * ========================================================
+     */
+
+    cout
+        << "========================================\n"
+        << " SentimentEngine - Production Prediction\n"
+        << "========================================\n";
+
+
+    cout
+        << "Text       : "
+        << text
+        << '\n';
+
+
+    cout
+        << "Prediction : "
+        << Names[label]
+        << '\n';
+
+
+    cout
+        << "Score      : "
+        << fixed
+        << setprecision(6)
+        << scores[label]
+        << '\n';
+
+
+    cout
+        << "Confidence : "
+        << fixed
+        << setprecision(2)
+        << confidence * 100.0
+        << "%\n";
+
+
+    cout
+        << "Confidence level : "
+        << confidence_level(
+            confidence
+        )
+        << '\n';
+
+
+    cout
+        << "Decision margin  : "
+        << fixed
+        << setprecision(6)
+        << margin
+        << '\n';
+
+
+    cout
+        << "Policy           : "
+        << policy(
+            confidence,
+            margin
+        )
         << "\n\n";
 
-    // --------------------------------------------------------
-    // Training accuracy
-    // --------------------------------------------------------
 
-    sz correct = 0;
+    /*
+     * ========================================================
+     * Decision scores
+     * ========================================================
+     */
 
-    std::cout
-        << "Training predictions:\n\n";
+    cout
+        << "Decision Scores\n";
 
-    for (sz i = 0;
-         i < documents.size();
-         ++i) {
 
-        const Prediction prediction =
-            svm.predict(features[i]);
+    cout
+        << "  Negative : "
+        << fixed
+        << setprecision(6)
+        << scores[0]
+        << '\n';
 
-        const bool is_correct =
-            prediction.label == labels[i];
 
-        if (is_correct) {
-            ++correct;
-        }
+    cout
+        << "  Neutral  : "
+        << scores[1]
+        << '\n';
 
-        std::cout
-            << "[" << i + 1 << "] "
-            << documents[i]
-            << "\n";
 
-        std::cout
-            << "    expected: "
-            << to_string(labels[i])
-            << "\n";
+    cout
+        << "  Positive : "
+        << scores[2]
+        << "\n\n";
 
-        std::cout
-            << "    predicted: "
-            << to_string(prediction.label)
-            << "\n";
 
-        std::cout
-            << "    score: "
-            << std::fixed
-            << std::setprecision(6)
-            << prediction.score
-            << "\n";
+    /*
+     * ========================================================
+     * Confidence distribution
+     * ========================================================
+     *
+     * These values are softmax-normalized SVM scores.
+     *
+     * They are useful as relative confidence indicators,
+     * but they are NOT calibrated probabilities.
+     * ========================================================
+     */
 
-        std::cout
-            << "    result: "
-            << (is_correct ? "PASS" : "FAIL")
-            << "\n\n";
-    }
+    cout
+        << "Confidence Distribution\n";
 
-    const double accuracy =
-        static_cast<double>(correct) /
-        static_cast<double>(documents.size());
 
-    std::cout
-        << "Training accuracy: "
-        << std::fixed
-        << std::setprecision(2)
-        << accuracy * 100.0
-        << "%\n\n";
+    cout
+        << "  Negative : "
+        << fixed
+        << setprecision(4)
+        << probabilities[0]
+        << '\n';
 
-    // --------------------------------------------------------
-    // Unseen prediction tests
-    // --------------------------------------------------------
 
-    const vec<str> test_documents = {
-        "excellent wonderful product",
-        "average product experience",
-        "terrible horrible product"
-    };
+    cout
+        << "  Neutral  : "
+        << probabilities[1]
+        << '\n';
 
-    std::cout
-        << "Unseen prediction tests:\n\n";
 
-    for (const auto& document : test_documents) {
+    cout
+        << "  Positive : "
+        << probabilities[2]
+        << '\n';
 
-        const SparseVector sparse_features =
-            vectorizer.transform_sparse(document);
-
-        const Prediction prediction =
-            svm.predict(sparse_features);
-
-        std::cout
-            << "Text: "
-            << document
-            << "\n";
-
-        std::cout
-            << "    predicted: "
-            << to_string(prediction.label)
-            << "\n";
-
-        std::cout
-            << "    score: "
-            << std::fixed
-            << std::setprecision(6)
-            << prediction.score
-            << "\n\n";
-    }
-
-    std::cout
-        << "========================================\n"
-        << " Test completed\n"
-        << "========================================\n";
 
     return 0;
 }

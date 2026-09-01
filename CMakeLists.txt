@@ -59,6 +59,8 @@ target_compile_options(
         -Wall
         -Wextra
         -Wpedantic
+        -O3
+        -march=native
 )
 
 # ============================================================
