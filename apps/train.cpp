@@ -32,7 +32,7 @@ namespace
     constexpr sz MinimumDocumentFrequency = 3;
     constexpr sz ParquetBatchSize = 65'536;
 
-    constexpr sz Epochs = 50;
+    constexpr sz Epochs = 500;
 
     constexpr double InitialLearningRate = 0.0010;
     constexpr double MinimumLearningRate = 0.00008;
@@ -55,7 +55,7 @@ namespace
      * Positive = 1.0
      */
     constexpr double NegativeWeightMultiplier = 1.00;
-    constexpr double NeutralWeightMultiplier = 2.40;
+    constexpr double NeutralWeightMultiplier = 2.40; // 2.40
     constexpr double PositiveWeightMultiplier = 1.00;
 
     constexpr u64 SplitSeed =
