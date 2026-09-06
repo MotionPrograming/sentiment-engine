@@ -64,6 +64,9 @@ Or directly:
 
 ```bash
 ./build/sentiment_train data/reviews.parquet models cache
+
+ex-
+./build/sentiment_train data/software_reviews_3m.parquet models/ cache/
 ```
 
 Generated artifacts:

@@ -1,1 +1,1688 @@
-bash: ./sentiment_trainer: No such file or directory
+========================================
+ SentimentEngine
+ Production Linear SVM Training
+========================================
+
+Configuration
+----------------------------------------
+Dataset            : "data/software_reviews_3m.parquet"
+Model directory    : "models/"
+Cache directory    : "cache/"
+Max features       : 500000
+Minimum DF         : 3
+Epochs             : 500
+Initial LR         : 0.001
+Minimum LR         : 8e-05
+LR decay           : 0.12
+Regularization     : 5e-05
+Validation interval: 2
+Early patience     : 3
+
+Class weights
+----------------------------------------
+Negative           : 1
+Neutral            : 2.4
+Positive           : 1
+
+Cache is missing or outdated.
+
+========================================
+ Building disk cache
+========================================
+
+Rows read          : 3052680
+Unique rows        : 2930497
+Duplicate rows     : 121742
+Conflict duplicates: 30076
+
+Class distribution:
+Negative           : 1129081
+Neutral            : 465808
+Positive           : 1335608
+
+Split:
+Train              : 2345100
+Validation         : 293326
+Test               : 292071
+
+Writing cache...
+Cache build complete.
+
+Dataset ready.
+Train rows      : 2345100
+Validation rows : 293326
+Test rows       : 292071
+
+========================================
+ Building TF-IDF vocabulary
+========================================
+Documents          : 2345100
+Unique terms       : 4068136
+Selected features  : 500000
+Minimum DF         : 3
+Maximum features   : 500000
+
+========================================
+ SVM Class Weights
+========================================
+Requested Negative : 1.0000
+Requested Neutral  : 2.4000
+Requested Positive : 1.0000
+
+Actual SVM weights:
+Negative           : 1.0000
+Neutral            : 2.4000
+Positive           : 1.0000
+
+========================================
+ Training
+========================================
+
+Epoch 1/500
+Learning rate : 0.00100000
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 35.49 sec
+
+Epoch 2/500
+Learning rate : 0.00089286
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 33.52 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7150
+Macro F1    : 0.6168
+Weighted F1 : 0.7044
+
+Class 0
+  Precision: 0.7006
+  Recall   : 0.8383
+  F1       : 0.7633
+  Support  : 113110
+
+Class 1
+  Precision: 0.3524
+  Recall   : 0.2473
+  F1       : 0.2906
+  Support  : 45922
+
+Class 2
+  Precision: 0.8233
+  Recall   : 0.7710
+  F1       : 0.7963
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         94823      7942     10345
+Actual Neu         22692     11357     11873
+Actual Pos         17822     12931    103541
+
+New best model.
+
+Epoch 3/500
+Learning rate : 0.00080645
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 32.55 sec
+
+Epoch 4/500
+Learning rate : 0.00073529
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 31.91 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7186
+Macro F1    : 0.6397
+Weighted F1 : 0.7189
+
+Class 0
+  Precision: 0.7292
+  Recall   : 0.8139
+  F1       : 0.7692
+  Support  : 113110
+
+Class 1
+  Precision: 0.3481
+  Recall   : 0.3435
+  F1       : 0.3458
+  Support  : 45922
+
+Class 2
+  Precision: 0.8455
+  Recall   : 0.7665
+  F1       : 0.8040
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         92063     12613      8434
+Actual Neu         19764     15776     10382
+Actual Pos         14432     16930    102932
+
+New best model.
+
+Epoch 5/500
+Learning rate : 0.00067568
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 31.93 sec
+
+Epoch 6/500
+Learning rate : 0.00062500
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.09 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7215
+Macro F1    : 0.6467
+Weighted F1 : 0.7241
+
+Class 0
+  Precision: 0.7394
+  Recall   : 0.8072
+  F1       : 0.7718
+  Support  : 113110
+
+Class 1
+  Precision: 0.3505
+  Recall   : 0.3699
+  F1       : 0.3599
+  Support  : 45922
+
+Class 2
+  Precision: 0.8515
+  Recall   : 0.7696
+  F1       : 0.8085
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         91307     13883      7920
+Actual Neu         18833     16986     10103
+Actual Pos         13353     17592    103349
+
+New best model.
+
+Epoch 7/500
+Learning rate : 0.00058140
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 31.57 sec
+
+Epoch 8/500
+Learning rate : 0.00054348
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 35.63 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7220
+Macro F1    : 0.6515
+Weighted F1 : 0.7272
+
+Class 0
+  Precision: 0.7466
+  Recall   : 0.7999
+  F1       : 0.7723
+  Support  : 113110
+
+Class 1
+  Precision: 0.3496
+  Recall   : 0.3964
+  F1       : 0.3716
+  Support  : 45922
+
+Class 2
+  Precision: 0.8587
+  Recall   : 0.7679
+  F1       : 0.8107
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         90473     15335      7302
+Actual Neu         18051     18203      9668
+Actual Pos         12653     18523    103118
+
+New best model.
+
+Epoch 9/500
+Learning rate : 0.00051020
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 36.47 sec
+
+Epoch 10/500
+Learning rate : 0.00048077
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 33.74 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7205
+Macro F1    : 0.6546
+Weighted F1 : 0.7284
+
+Class 0
+  Precision: 0.7532
+  Recall   : 0.7904
+  F1       : 0.7714
+  Support  : 113110
+
+Class 1
+  Precision: 0.3469
+  Recall   : 0.4244
+  F1       : 0.3818
+  Support  : 45922
+
+Class 2
+  Precision: 0.8649
+  Recall   : 0.7629
+  F1       : 0.8107
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         89405     16905      6800
+Actual Neu         17226     19488      9208
+Actual Pos         12062     19783    102449
+
+New best model.
+
+Epoch 11/500
+Learning rate : 0.00045455
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 37.80 sec
+
+Epoch 12/500
+Learning rate : 0.00043103
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 32.98 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7236
+Macro F1    : 0.6562
+Weighted F1 : 0.7305
+
+Class 0
+  Precision: 0.7542
+  Recall   : 0.7934
+  F1       : 0.7733
+  Support  : 113110
+
+Class 1
+  Precision: 0.3510
+  Recall   : 0.4182
+  F1       : 0.3817
+  Support  : 45922
+
+Class 2
+  Precision: 0.8637
+  Recall   : 0.7692
+  F1       : 0.8137
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         89745     16469      6896
+Actual Neu         17304     19206      9412
+Actual Pos         11947     19043    103304
+
+New best model.
+
+Epoch 13/500
+Learning rate : 0.00040984
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.69 sec
+
+Epoch 14/500
+Learning rate : 0.00039063
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.35 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7230
+Macro F1    : 0.6578
+Weighted F1 : 0.7313
+
+Class 0
+  Precision: 0.7590
+  Recall   : 0.7866
+  F1       : 0.7726
+  Support  : 113110
+
+Class 1
+  Precision: 0.3493
+  Recall   : 0.4323
+  F1       : 0.3863
+  Support  : 45922
+
+Class 2
+  Precision: 0.8658
+  Recall   : 0.7689
+  F1       : 0.8145
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88974     17388      6748
+Actual Neu         16811     19850      9261
+Actual Pos         11437     19597    103260
+
+New best model.
+
+Epoch 15/500
+Learning rate : 0.00037313
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.41 sec
+
+Epoch 16/500
+Learning rate : 0.00035714
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.99 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7231
+Macro F1    : 0.6588
+Weighted F1 : 0.7319
+
+Class 0
+  Precision: 0.7593
+  Recall   : 0.7877
+  F1       : 0.7733
+  Support  : 113110
+
+Class 1
+  Precision: 0.3489
+  Recall   : 0.4382
+  F1       : 0.3885
+  Support  : 45922
+
+Class 2
+  Precision: 0.8696
+  Recall   : 0.7661
+  F1       : 0.8146
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         89099     17593      6418
+Actual Neu         16785     20121      9016
+Actual Pos         11455     19955    102884
+
+New best model.
+
+Epoch 17/500
+Learning rate : 0.00034247
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.17 sec
+
+Epoch 18/500
+Learning rate : 0.00032895
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 38.11 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7226
+Macro F1    : 0.6594
+Weighted F1 : 0.7322
+
+Class 0
+  Precision: 0.7629
+  Recall   : 0.7814
+  F1       : 0.7720
+  Support  : 113110
+
+Class 1
+  Precision: 0.3477
+  Recall   : 0.4464
+  F1       : 0.3909
+  Support  : 45922
+
+Class 2
+  Precision: 0.8696
+  Recall   : 0.7675
+  F1       : 0.8153
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88381     18280      6449
+Actual Neu         16411     20500      9011
+Actual Pos         11051     20174    103069
+
+New best model.
+
+Epoch 19/500
+Learning rate : 0.00031646
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 42.27 sec
+
+Epoch 20/500
+Learning rate : 0.00030488
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 35.50 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7231
+Macro F1    : 0.6602
+Weighted F1 : 0.7328
+
+Class 0
+  Precision: 0.7630
+  Recall   : 0.7829
+  F1       : 0.7728
+  Support  : 113110
+
+Class 1
+  Precision: 0.3484
+  Recall   : 0.4481
+  F1       : 0.3920
+  Support  : 45922
+
+Class 2
+  Precision: 0.8713
+  Recall   : 0.7668
+  F1       : 0.8157
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88553     18260      6297
+Actual Neu         16430     20576      8916
+Actual Pos         11081     20231    102982
+
+New best model.
+
+Epoch 21/500
+Learning rate : 0.00029412
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 37.28 sec
+
+Epoch 22/500
+Learning rate : 0.00028409
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.68 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7239
+Macro F1    : 0.6609
+Weighted F1 : 0.7335
+
+Class 0
+  Precision: 0.7635
+  Recall   : 0.7835
+  F1       : 0.7734
+  Support  : 113110
+
+Class 1
+  Precision: 0.3492
+  Recall   : 0.4487
+  F1       : 0.3927
+  Support  : 45922
+
+Class 2
+  Precision: 0.8719
+  Recall   : 0.7677
+  F1       : 0.8165
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88625     18239      6246
+Actual Neu         16421     20604      8897
+Actual Pos         11032     20164    103098
+
+New best model.
+
+Epoch 23/500
+Learning rate : 0.00027473
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 37.32 sec
+
+Epoch 24/500
+Learning rate : 0.00026596
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 37.61 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7240
+Macro F1    : 0.6615
+Weighted F1 : 0.7339
+
+Class 0
+  Precision: 0.7655
+  Recall   : 0.7810
+  F1       : 0.7732
+  Support  : 113110
+
+Class 1
+  Precision: 0.3492
+  Recall   : 0.4523
+  F1       : 0.3941
+  Support  : 45922
+
+Class 2
+  Precision: 0.8718
+  Recall   : 0.7689
+  F1       : 0.8171
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88340     18504      6266
+Actual Neu         16235     20772      8915
+Actual Pos         10826     20215    103253
+
+New best model.
+
+Epoch 25/500
+Learning rate : 0.00025773
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 32.21 sec
+
+Epoch 26/500
+Learning rate : 0.00025000
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 33.34 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7253
+Macro F1    : 0.6618
+Weighted F1 : 0.7346
+
+Class 0
+  Precision: 0.7640
+  Recall   : 0.7849
+  F1       : 0.7743
+  Support  : 113110
+
+Class 1
+  Precision: 0.3509
+  Recall   : 0.4470
+  F1       : 0.3932
+  Support  : 45922
+
+Class 2
+  Precision: 0.8719
+  Recall   : 0.7702
+  F1       : 0.8179
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88784     18095      6231
+Actual Neu         16429     20528      8965
+Actual Pos         10992     19874    103428
+
+New best model.
+
+Epoch 27/500
+Learning rate : 0.00024272
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 41.35 sec
+
+Epoch 28/500
+Learning rate : 0.00023585
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 35.40 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7248
+Macro F1    : 0.6621
+Weighted F1 : 0.7346
+
+Class 0
+  Precision: 0.7663
+  Recall   : 0.7806
+  F1       : 0.7734
+  Support  : 113110
+
+Class 1
+  Precision: 0.3501
+  Recall   : 0.4521
+  F1       : 0.3946
+  Support  : 45922
+
+Class 2
+  Precision: 0.8716
+  Recall   : 0.7711
+  F1       : 0.8183
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88289     18531      6290
+Actual Neu         16199     20761      8962
+Actual Pos         10724     20012    103558
+
+No significant improvement. Patience: 1/3
+
+Epoch 29/500
+Learning rate : 0.00022936
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 41.21 sec
+
+Epoch 30/500
+Learning rate : 0.00022321
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 28.35 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7228
+Macro F1    : 0.6624
+Weighted F1 : 0.7341
+
+Class 0
+  Precision: 0.7688
+  Recall   : 0.7750
+  F1       : 0.7719
+  Support  : 113110
+
+Class 1
+  Precision: 0.3473
+  Recall   : 0.4662
+  F1       : 0.3981
+  Support  : 45922
+
+Class 2
+  Precision: 0.8750
+  Recall   : 0.7666
+  F1       : 0.8172
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87660     19413      6037
+Actual Neu         15841     21411      8670
+Actual Pos         10521     20827    102946
+
+New best model.
+
+Epoch 31/500
+Learning rate : 0.00021739
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.45 sec
+
+Epoch 32/500
+Learning rate : 0.00021186
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.24 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7246
+Macro F1    : 0.6627
+Weighted F1 : 0.7349
+
+Class 0
+  Precision: 0.7668
+  Recall   : 0.7804
+  F1       : 0.7736
+  Support  : 113110
+
+Class 1
+  Precision: 0.3497
+  Recall   : 0.4569
+  F1       : 0.3962
+  Support  : 45922
+
+Class 2
+  Precision: 0.8740
+  Recall   : 0.7692
+  F1       : 0.8183
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88271     18752      6087
+Actual Neu         16127     20984      8811
+Actual Pos         10714     20278    103302
+
+No significant improvement. Patience: 1/3
+
+Epoch 33/500
+Learning rate : 0.00020661
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 33.66 sec
+
+Epoch 34/500
+Learning rate : 0.00020161
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.46 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7246
+Macro F1    : 0.6632
+Weighted F1 : 0.7352
+
+Class 0
+  Precision: 0.7682
+  Recall   : 0.7787
+  F1       : 0.7734
+  Support  : 113110
+
+Class 1
+  Precision: 0.3497
+  Recall   : 0.4611
+  F1       : 0.3977
+  Support  : 45922
+
+Class 2
+  Precision: 0.8744
+  Recall   : 0.7691
+  F1       : 0.8184
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88079     18966      6065
+Actual Neu         15981     21173      8768
+Actual Pos         10599     20409    103286
+
+New best model.
+
+Epoch 35/500
+Learning rate : 0.00019685
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 38.39 sec
+
+Epoch 36/500
+Learning rate : 0.00019231
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 38.51 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7248
+Macro F1    : 0.6635
+Weighted F1 : 0.7355
+
+Class 0
+  Precision: 0.7694
+  Recall   : 0.7770
+  F1       : 0.7732
+  Support  : 113110
+
+Class 1
+  Precision: 0.3501
+  Recall   : 0.4619
+  F1       : 0.3983
+  Support  : 45922
+
+Class 2
+  Precision: 0.8735
+  Recall   : 0.7708
+  F1       : 0.8190
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87886     19075      6149
+Actual Neu         15872     21211      8839
+Actual Pos         10468     20308    103518
+
+No significant improvement. Patience: 1/3
+
+Epoch 37/500
+Learning rate : 0.00018797
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 33.09 sec
+
+Epoch 38/500
+Learning rate : 0.00018382
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.60 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7250
+Macro F1    : 0.6638
+Weighted F1 : 0.7357
+
+Class 0
+  Precision: 0.7695
+  Recall   : 0.7778
+  F1       : 0.7736
+  Support  : 113110
+
+Class 1
+  Precision: 0.3502
+  Recall   : 0.4633
+  F1       : 0.3989
+  Support  : 45922
+
+Class 2
+  Precision: 0.8745
+  Recall   : 0.7700
+  F1       : 0.8189
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87973     19066      6071
+Actual Neu         15873     21275      8774
+Actual Pos         10482     20402    103410
+
+New best model.
+
+Epoch 39/500
+Learning rate : 0.00017986
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 33.37 sec
+
+Epoch 40/500
+Learning rate : 0.00017606
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 32.69 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7260
+Macro F1    : 0.6641
+Weighted F1 : 0.7362
+
+Class 0
+  Precision: 0.7691
+  Recall   : 0.7794
+  F1       : 0.7742
+  Support  : 113110
+
+Class 1
+  Precision: 0.3514
+  Recall   : 0.4593
+  F1       : 0.3982
+  Support  : 45922
+
+Class 2
+  Precision: 0.8738
+  Recall   : 0.7722
+  F1       : 0.8198
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         88159     18844      6107
+Actual Neu         15960     21092      8870
+Actual Pos         10511     20086    103697
+
+No significant improvement. Patience: 1/3
+
+Epoch 41/500
+Learning rate : 0.00017241
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 29.67 sec
+
+Epoch 42/500
+Learning rate : 0.00016892
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 29.93 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7243
+Macro F1    : 0.6641
+Weighted F1 : 0.7356
+
+Class 0
+  Precision: 0.7715
+  Recall   : 0.7741
+  F1       : 0.7728
+  Support  : 113110
+
+Class 1
+  Precision: 0.3490
+  Recall   : 0.4699
+  F1       : 0.4005
+  Support  : 45922
+
+Class 2
+  Precision: 0.8755
+  Recall   : 0.7692
+  F1       : 0.8189
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87560     19546      6004
+Actual Neu         15657     21580      8685
+Actual Pos         10274     20715    103305
+
+No significant improvement. Patience: 2/3
+
+Epoch 43/500
+Learning rate : 0.00016556
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 32.47 sec
+
+Epoch 44/500
+Learning rate : 0.00016234
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 29.48 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7251
+Macro F1    : 0.6643
+Weighted F1 : 0.7361
+
+Class 0
+  Precision: 0.7712
+  Recall   : 0.7756
+  F1       : 0.7734
+  Support  : 113110
+
+Class 1
+  Precision: 0.3500
+  Recall   : 0.4664
+  F1       : 0.3999
+  Support  : 45922
+
+Class 2
+  Precision: 0.8748
+  Recall   : 0.7711
+  F1       : 0.8197
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87732     19326      6052
+Actual Neu         15732     21417      8773
+Actual Pos         10302     20440    103552
+
+New best model.
+
+Epoch 45/500
+Learning rate : 0.00015924
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.38 sec
+
+Epoch 46/500
+Learning rate : 0.00015625
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 31.21 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7252
+Macro F1    : 0.6645
+Weighted F1 : 0.7362
+
+Class 0
+  Precision: 0.7713
+  Recall   : 0.7759
+  F1       : 0.7736
+  Support  : 113110
+
+Class 1
+  Precision: 0.3499
+  Recall   : 0.4672
+  F1       : 0.4001
+  Support  : 45922
+
+Class 2
+  Precision: 0.8754
+  Recall   : 0.7707
+  F1       : 0.8197
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87758     19362      5990
+Actual Neu         15724     21453      8745
+Actual Pos         10295     20496    103503
+
+No significant improvement. Patience: 1/3
+
+Epoch 47/500
+Learning rate : 0.00015337
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.24 sec
+
+Epoch 48/500
+Learning rate : 0.00015060
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 29.77 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7249
+Macro F1    : 0.6648
+Weighted F1 : 0.7363
+
+Class 0
+  Precision: 0.7721
+  Recall   : 0.7749
+  F1       : 0.7735
+  Support  : 113110
+
+Class 1
+  Precision: 0.3496
+  Recall   : 0.4712
+  F1       : 0.4014
+  Support  : 45922
+
+Class 2
+  Precision: 0.8765
+  Recall   : 0.7696
+  F1       : 0.8196
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87650     19554      5906
+Actual Neu         15624     21637      8661
+Actual Pos         10241     20698    103355
+
+New best model.
+
+Epoch 49/500
+Learning rate : 0.00014793
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.05 sec
+
+Epoch 50/500
+Learning rate : 0.00014535
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.42 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7253
+Macro F1    : 0.6648
+Weighted F1 : 0.7365
+
+Class 0
+  Precision: 0.7712
+  Recall   : 0.7769
+  F1       : 0.7740
+  Support  : 113110
+
+Class 1
+  Precision: 0.3500
+  Recall   : 0.4685
+  F1       : 0.4006
+  Support  : 45922
+
+Class 2
+  Precision: 0.8767
+  Recall   : 0.7697
+  F1       : 0.8197
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87871     19362      5877
+Actual Neu         15748     21513      8661
+Actual Pos         10327     20597    103370
+
+No significant improvement. Patience: 1/3
+
+Epoch 51/500
+Learning rate : 0.00014286
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.75 sec
+
+Epoch 52/500
+Learning rate : 0.00014045
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.05 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7254
+Macro F1    : 0.6651
+Weighted F1 : 0.7367
+
+Class 0
+  Precision: 0.7722
+  Recall   : 0.7757
+  F1       : 0.7739
+  Support  : 113110
+
+Class 1
+  Precision: 0.3501
+  Recall   : 0.4698
+  F1       : 0.4012
+  Support  : 45922
+
+Class 2
+  Precision: 0.8764
+  Recall   : 0.7705
+  F1       : 0.8200
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87743     19461      5906
+Actual Neu         15655     21576      8691
+Actual Pos         10234     20586    103474
+
+No significant improvement. Patience: 2/3
+
+Epoch 53/500
+Learning rate : 0.00013812
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 33.69 sec
+
+Epoch 54/500
+Learning rate : 0.00013587
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.92 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7252
+Macro F1    : 0.6652
+Weighted F1 : 0.7367
+
+Class 0
+  Precision: 0.7727
+  Recall   : 0.7749
+  F1       : 0.7738
+  Support  : 113110
+
+Class 1
+  Precision: 0.3497
+  Recall   : 0.4724
+  F1       : 0.4019
+  Support  : 45922
+
+Class 2
+  Precision: 0.8771
+  Recall   : 0.7697
+  F1       : 0.8199
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87649     19620      5841
+Actual Neu         15588     21694      8640
+Actual Pos         10200     20730    103364
+
+New best model.
+
+Epoch 55/500
+Learning rate : 0.00013369
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 34.26 sec
+
+Epoch 56/500
+Learning rate : 0.00013158
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.18 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7253
+Macro F1    : 0.6653
+Weighted F1 : 0.7368
+
+Class 0
+  Precision: 0.7729
+  Recall   : 0.7747
+  F1       : 0.7738
+  Support  : 113110
+
+Class 1
+  Precision: 0.3498
+  Recall   : 0.4726
+  F1       : 0.4021
+  Support  : 45922
+
+Class 2
+  Precision: 0.8770
+  Recall   : 0.7700
+  F1       : 0.8200
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87624     19638      5848
+Actual Neu         15568     21704      8650
+Actual Pos         10185     20701    103408
+
+No significant improvement. Patience: 1/3
+
+Epoch 57/500
+Learning rate : 0.00012953
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.05 sec
+
+Epoch 58/500
+Learning rate : 0.00012755
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.86 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7249
+Macro F1    : 0.6653
+Weighted F1 : 0.7367
+
+Class 0
+  Precision: 0.7740
+  Recall   : 0.7725
+  F1       : 0.7732
+  Support  : 113110
+
+Class 1
+  Precision: 0.3492
+  Recall   : 0.4753
+  F1       : 0.4026
+  Support  : 45922
+
+Class 2
+  Precision: 0.8769
+  Recall   : 0.7701
+  F1       : 0.8201
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87373     19876      5861
+Actual Neu         15445     21825      8652
+Actual Pos         10065     20804    103425
+
+No significant improvement. Patience: 2/3
+
+Epoch 59/500
+Learning rate : 0.00012563
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 29.81 sec
+
+Epoch 60/500
+Learning rate : 0.00012376
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 29.85 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7257
+Macro F1    : 0.6656
+Weighted F1 : 0.7371
+
+Class 0
+  Precision: 0.7736
+  Recall   : 0.7739
+  F1       : 0.7738
+  Support  : 113110
+
+Class 1
+  Precision: 0.3504
+  Recall   : 0.4727
+  F1       : 0.4025
+  Support  : 45922
+
+Class 2
+  Precision: 0.8764
+  Recall   : 0.7716
+  F1       : 0.8206
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87532     19672      5906
+Actual Neu         15503     21707      8712
+Actual Pos         10108     20571    103615
+
+New best model.
+
+Epoch 61/500
+Learning rate : 0.00012195
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 35.38 sec
+
+Epoch 62/500
+Learning rate : 0.00012019
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.49 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7258
+Macro F1    : 0.6657
+Weighted F1 : 0.7372
+
+Class 0
+  Precision: 0.7733
+  Recall   : 0.7748
+  F1       : 0.7741
+  Support  : 113110
+
+Class 1
+  Precision: 0.3504
+  Recall   : 0.4722
+  F1       : 0.4023
+  Support  : 45922
+
+Class 2
+  Precision: 0.8769
+  Recall   : 0.7712
+  F1       : 0.8206
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87640     19611      5859
+Actual Neu         15553     21685      8684
+Actual Pos         10142     20589    103563
+
+No significant improvement. Patience: 1/3
+
+Epoch 63/500
+Learning rate : 0.00011848
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.43 sec
+
+Epoch 64/500
+Learning rate : 0.00011682
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 30.76 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7253
+Macro F1    : 0.6658
+Weighted F1 : 0.7371
+
+Class 0
+  Precision: 0.7742
+  Recall   : 0.7729
+  F1       : 0.7735
+  Support  : 113110
+
+Class 1
+  Precision: 0.3499
+  Recall   : 0.4760
+  F1       : 0.4033
+  Support  : 45922
+
+Class 2
+  Precision: 0.8774
+  Recall   : 0.7705
+  F1       : 0.8205
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87421     19859      5830
+Actual Neu         15436     21861      8625
+Actual Pos         10063     20757    103474
+
+No significant improvement. Patience: 2/3
+
+Epoch 65/500
+Learning rate : 0.00011521
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 31.82 sec
+
+Epoch 66/500
+Learning rate : 0.00011364
+  Processed: 250000 / 2345100  Processed: 500000 / 2345100  Processed: 750000 / 2345100  Processed: 1000000 / 2345100  Processed: 1250000 / 2345100  Processed: 1500000 / 2345100  Processed: 1750000 / 2345100  Processed: 2000000 / 2345100  Processed: 2250000 / 2345100
+Epoch time    : 29.91 sec
+
+Evaluating validation set...
+
+----------------------------------------
+Validation
+----------------------------------------
+Accuracy    : 0.7258
+Macro F1    : 0.6658
+Weighted F1 : 0.7373
+
+Class 0
+  Precision: 0.7735
+  Recall   : 0.7746
+  F1       : 0.7741
+  Support  : 113110
+
+Class 1
+  Precision: 0.3503
+  Recall   : 0.4733
+  F1       : 0.4026
+  Support  : 45922
+
+Class 2
+  Precision: 0.8774
+  Recall   : 0.7710
+  F1       : 0.8207
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87618     19677      5815
+Actual Neu         15531     21737      8654
+Actual Pos         10119     20639    103536
+
+No significant improvement. Patience: 3/3
+
+Early stopping triggered.
+
+========================================
+ Best Model
+========================================
+Best Validation Macro F1 : 0.6656
+
+----------------------------------------
+Final Validation
+----------------------------------------
+Accuracy    : 0.7257
+Macro F1    : 0.6656
+Weighted F1 : 0.7371
+
+Class 0
+  Precision: 0.7736
+  Recall   : 0.7739
+  F1       : 0.7738
+  Support  : 113110
+
+Class 1
+  Precision: 0.3504
+  Recall   : 0.4727
+  F1       : 0.4025
+  Support  : 45922
+
+Class 2
+  Precision: 0.8764
+  Recall   : 0.7716
+  F1       : 0.8206
+  Support  : 134294
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         87532     19672      5906
+Actual Neu         15503     21707      8712
+Actual Pos         10108     20571    103615
+
+========================================
+ Final Test Evaluation
+========================================
+
+----------------------------------------
+Test
+----------------------------------------
+Accuracy    : 0.7245
+Macro F1    : 0.6655
+Weighted F1 : 0.7353
+
+Class 0
+  Precision: 0.7721
+  Recall   : 0.7738
+  F1       : 0.7729
+  Support  : 112266
+
+Class 1
+  Precision: 0.3547
+  Recall   : 0.4694
+  F1       : 0.4040
+  Support  : 46638
+
+Class 2
+  Precision: 0.8729
+  Recall   : 0.7724
+  F1       : 0.8196
+  Support  : 133167
+
+Confusion Matrix:
+                 Predicted
+              Neg       Neu       Pos
+Actual Neg         86870     19446      5950
+Actual Neu         15717     21891      9030
+Actual Pos          9925     20386    102856
+
+Saving models...
+TF-IDF model : "models/tfidf.model"
+SVM model    : "models/svm.model"
+
+========================================
+ Training Complete
+========================================
+Test Accuracy    : 0.7245
+Test Macro F1    : 0.6655
+Test Weighted F1 : 0.7353
+
+Neutral class:
+  Precision : 0.3547
+  Recall    : 0.4694
+  F1        : 0.4040

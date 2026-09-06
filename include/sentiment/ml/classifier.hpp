@@ -5,6 +5,9 @@
 
 namespace sentiment {
 
+// Forward declaration
+struct Prediction;
+
 class Classifier {
 public:
     virtual ~Classifier() = default;
